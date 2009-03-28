@@ -1,8 +1,13 @@
 app_name = ask("What do you want to call your application?")
 domain_name = ask("What domain name would you like for your application? (ie example.com)")
-install_tagging = true if yes?('Install Tagging?')
-install_gems = true if yes?('Install gems on local system? (y/n)')
-unpack_gems = true if yes?('Unpack gems into vendor directory? (y/n)')
+install_tagging = true if yes?('Install Tagging? (y/n)')
+install_gems = false #true if yes?('Install gems on local system? (y/n)')
+unpack_gems = false #true if yes?('Unpack gems into vendor directory? (y/n)')
+install_capistrano = false #true if yes?('Install capistrano? (y/n)')
+#====================
+# Setup git.  Without this submodules wont' work
+#====================
+git :init
 
 #====================
 # plugins 
@@ -19,10 +24,10 @@ plugin 'acts-as-taggable-on', :git => "git://github.com/mbleigh/acts-as-taggable
 
 # muck engines
 plugin 'muck_engine', :git => "git://github.com/jbasdf/muck_engine.git", :submodule => true
-rake(':muck_engine:sync')
+rake('muck_engine:sync')
 
 plugin 'muck_user_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
-rake(':muck_users_engine:sync')
+rake('muck_users_engine:sync')
 
 #====================
 # gems 
@@ -47,7 +52,7 @@ rake('gems:unpack:dependencies') if unpack_gems
 #==================== 
 # Install and configure capistrano 
 #====================
-run "sudo gem install capistrano"
+run "sudo gem install capistrano" if install_capistrano
 
 #==================== 
 # build custom files 
@@ -86,7 +91,7 @@ end
 
 
 file 'db/migrate/20090327231918_create_users.rb',
-%Q{class CreateUsers < ActiveRecord::Migration
+%q{class CreateUsers < ActiveRecord::Migration
   def self.up
     create_table :users, :force => true do |t|
       t.string   :login
@@ -122,7 +127,7 @@ end
 
 
 file 'config/environment.rb',
-%Q{# Be sure to restart your server when you modify this file
+%q{# Be sure to restart your server when you modify this file
 
 # Specifies gem version of Rails to use when vendor/rails is not present
 RAILS_GEM_VERSION = '2.3.2' unless defined? RAILS_GEM_VERSION
@@ -268,7 +273,7 @@ end
 
 
 file 'app/views/layouts/default.html.erb',
-Q%{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+%q{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   	<head>
   		<title><%= @page_title || GlobalConfig.application_name %></title>
@@ -310,7 +315,7 @@ Q%{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/T
 }
 
 
-file, 'Capfile',
+file 'Capfile',
 %Q{load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
 load 'config/deploy'  
@@ -318,19 +323,17 @@ load 'config/deploy'
 
 
 file 'config/database.yml',
-%q{<% PASSWORD_FILE = File.join(RAILS_ROOT, '..', '..', 'shared', 'config', 'dbpassword') %>
- 
-development:
+%Q{development:
   adapter: mysql
-  database: <%= app_name %>_development
+  database: #{app_name}_development
   username: root
   password:
   host: localhost
   encoding: utf8
 
 test:
-adapter: mysql
-  database: <%= app_name %>_test
+  adapter: mysql
+  database: #{app_name}_test
   username: root
   password:
   host: localhost
@@ -338,18 +341,18 @@ adapter: mysql
 
 staging:
   adapter: mysql
-  database: <%= app_name %>_staging
-  username: <%= app_name %>
-  password: <%= File.read(PASSWORD_FILE).chomp if File.readable? PASSWORD_FILE %>
+  database: #{app_name}_staging
+  username: #{app_name}
+  password: 
   host: localhost
   encoding: utf8
   socket: /var/lib/mysql/mysql.sock
 
 production:
   adapter: mysql
-  database: <%= app_name %>_production
-  username: <%= app_name %>
-  password: <%= File.read(PASSWORD_FILE).chomp if File.readable? PASSWORD_FILE %>
+  database: #{app_name}_production
+  username: #{app_name}
+  password: 
   host: localhost
   encoding: utf8
   socket: /var/lib/mysql/mysql.sock
@@ -379,18 +382,17 @@ run "rm README"
 run "rm public/index.html"
 run "rm public/favicon.ico"
 run 'rm public/images/rails.png'
-run 'rm config/database.yml'
  
 
 #==================== 
 # Rake tasks
 #==================== 
 rake('db:sessions:create') # Use database (active record) session store
-rake('acts_as_taggable:db:create')
+rake('db:create')
 rake('db:migrate')
 # Generate OpenID authentication keys
 rake('open_id_authentication:db:create')
-
+rake('db:test:prepare')
 
 #==================== 
 # Setup git
@@ -413,12 +415,16 @@ doc/app
 END
  
 # Commit all work so far to the repository
-git :init
 git :add => '.'
 git :commit => "-a -m 'Initial commit'"
 
 # Initialize submodules
 git :submodule => "init"
+
+# if ask('setup submodules for development? (y/n)') 
+#   run "vendor/plugins/muck_engine/git remote add push git@github.com:jbasdf/muck_engine.git"
+#   run "vendor/plugins/muck_users_engine/git remote add push git@github.com:jbasdf/muck_users_engine.git"
+# end
  
 # Success!
 puts "SUCCESS!"
