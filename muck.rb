@@ -48,55 +48,6 @@ rake('gems:unpack:dependencies') if unpack_gems
 run "sudo gem install capistrano"
 
 #==================== 
-# jQuery
-#====================
-run "curl -L http://jqueryjs.googlecode.com/files/jquery-1.3.2.min.js"
-run "curl -L http://malsup.com/jquery/form/jquery.form.js?2.24"
-
-#==================== 
-# commands 
-#====================
-run "touch tmp/.gitignore log/.gitignore vendor/.gitignore"
-  
-run %{find . -type d -empty | grep -v "vendor" | grep -v ".git" | grep -v "tmp" | xargs -I xxx touch xxx/.gitignore}
-file '.gitignore', <<-END
-.DS_Store
-coverage/*
-log/*.log
-tmp/**/*
-db/*.db
-db/*.sqlite3
-db/schema.rb
-config/database.yml
-db/*.sqlite3
-doc/api
-doc/app
-END
-
-# move database.yml
-run 'cp config/database.yml config/database.yml.example'
-
-#remove default files
-run "rm README"
-run "rm public/index.html"
-run "rm public/favicon.ico"
-run 'rm public/images/rails.png'
-
-# Use database (active record) session store
-rake('db:sessions:create')
-initializer 'session_store.rb', <<-FILE
-  ActionController::Base.session = { :session_key => '_#{(1..6).map { |x| (65 + rand(26)).chr }.join}_session', :secret => '#{(1..40).map { |x| (65 + rand(26)).chr }.join}' }
-  ActionController::Base.session_store = :active_record_store
-FILE
- 
-rake('acts_as_taggable:db:create')
-rake('db:migrate')
-
-# Generate OpenID authentication keys
-rake('open_id_authentication:db:create')
-
-
-#==================== 
 # build custom files 
 #====================
 
@@ -190,9 +141,9 @@ Rails::Initializer.run do |config|
   # config.load_paths += %W( #{RAILS_ROOT}/extras )
 
   # Specify gems that this application depends on and have them installed with rake gems:install
-  config.gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com', :version => '~> 2.3.5'
-  config.gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com', :version => '>= 1.1.3'
-  config.gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com', :version => '>= 2.0.5'
+  config.gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
+  config.gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com'
+  config.gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com'
 
   # Only load the plugins named here, in the order given (default is alphabetical).
   # :all can be used as a placeholder for all plugins not explicitly named
@@ -230,14 +181,10 @@ file 'config/global_config.yml',
   send_welcome: true
   allow_anonymous_commenting: false
   automatically_login_after_account_create: true
-  use_recaptcha: true
-  
-  # session key information
-  session_key: _#{app_name}_session
-  secret: YOU_NEED_A_SECRET(TODO)
   
   # if you use recaptcha you will need to also provide a public and private
   # key available from http://recaptcha.net.
+  use_recaptcha: true
   recaptcha_pub_key: GET_A_RECAPTCHA_KEY(TODO)
   recaptcha_priv_key: GET_A_RECAPTCHA_KEY(TODO)
   
@@ -420,9 +367,52 @@ initializer 'hoptoad.rb',
 end  
 }
 
+
+#==================== 
+# Copy over default files
+#====================
+run "cp -R public"
+
+
+#==================== 
+# remove default files 
+#====================
+run "rm README"
+run "rm public/index.html"
+run "rm public/favicon.ico"
+run 'rm public/images/rails.png'
+run 'rm config/database.yml'
+ 
+
+#==================== 
+# Rake tasks
+#==================== 
+rake('db:sessions:create') # Use database (active record) session store
+rake('acts_as_taggable:db:create')
+rake('db:migrate')
+# Generate OpenID authentication keys
+rake('open_id_authentication:db:create')
+
+
 #==================== 
 # Setup git
 #====================
+run "touch tmp/.gitignore log/.gitignore vendor/.gitignore"
+  
+run %{find . -type d -empty | grep -v "vendor" | grep -v ".git" | grep -v "tmp" | xargs -I xxx touch xxx/.gitignore}
+file '.gitignore', <<-END
+.DS_Store
+coverage/*
+log/*.log
+tmp/**/*
+db/*.db
+db/*.sqlite3
+db/schema.rb
+config/database.yml
+db/*.sqlite3
+doc/api
+doc/app
+END
  
 # Commit all work so far to the repository
 git :init
