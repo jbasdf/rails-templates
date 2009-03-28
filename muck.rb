@@ -8,19 +8,21 @@ unpack_gems = true if yes?('Unpack gems into vendor directory? (y/n)')
 # plugins 
 #====================
 plugin 'paperclip', :git => "git://github.com/thoughtbot/paperclip.git"
-plugin 'permalink_fu', :git => "git://github.com/technoweenie/permalink_fu.git"
 plugin 'hoptoad_notifier', :git => "git://github.com/thoughtbot/hoptoad_notifier.git"
 plugin 'recaptcha', :git => "http://github.com/ambethia/recaptcha/tree/master"
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
 plugin 'open_id_authentication', :git => 'git://github.com/rails/open_id_authentication.git'
 plugin 'jquery', :svn => "http://ennerchi.googlecode.com/svn/trunk/plugins/jrails"
 
+plugin 'permalink_fu', :git => "git://github.com/technoweenie/permalink_fu.git" 
 plugin 'acts-as-taggable-on', :git => "git://github.com/mbleigh/acts-as-taggable-on.git" if install_tagging
-
 
 # muck engines
 plugin 'muck_engine', :git => "git://github.com/jbasdf/muck_engine.git", :submodule => true
+rake(':muck_engine:sync')
+
 plugin 'muck_user_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
+rake(':muck_users_engine:sync')
 
 #====================
 # gems 
@@ -276,11 +278,13 @@ Q%{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/T
   		<meta name="robots" content="all" />	
   		<meta name="resource-type" content="document" />
   		<meta name="MSSmartTagsPreventParsing" content="true" />
+  		<%= stylesheet_link_tag 'reset' %>
   		<%= stylesheet_link_tag 'styles' %>
-  		<%= javascript_include_tag "jquery.js" %>
-      <%= javascript_include_tag "jquery-ui.js" %>
-      <%= javascript_include_tag "jrails.js" %>
-      <%= javascript_include_tag "jquery.jgrowl_minimized.js" %>
+  		<%= javascript_include_tag "jquery/jquery.js" %>
+      <%= javascript_include_tag "jquery/jquery-ui.js" %>
+      <%= javascript_include_tag "jquery/jrails.js" %>
+      <%= javascript_include_tag "jquery/jquery.jgrowl.js" %>
+      <%= javascript_include_tag "jquery/jquery.tips.js" %>
       <%= javascript_include_tag "application.js" %>
       <%= javascript_tag %[const AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
       <%= yield :head -%>
@@ -366,12 +370,6 @@ initializer 'hoptoad.rb',
   config.api_key = 'GET A HOPTOAD KEY(TODO)'
 end  
 }
-
-
-#==================== 
-# Copy over default files
-#====================
-run "cp -R public"
 
 
 #==================== 
