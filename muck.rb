@@ -4,6 +4,9 @@ install_tagging = true if yes?('Install Tagging? (y/n)')
 install_gems = false #true if yes?('Install gems on local system? (y/n)')
 unpack_gems = false #true if yes?('Unpack gems into vendor directory? (y/n)')
 install_capistrano = false #true if yes?('Install capistrano? (y/n)')
+
+setup_submodules_for_development = true if ask('Setup submodules for development?  You must have dev access to muck to do this. (y/n)') 
+
 #====================
 # Setup git.  Without this submodules wont' work
 #====================
@@ -26,7 +29,7 @@ plugin 'acts-as-taggable-on', :git => "git://github.com/mbleigh/acts-as-taggable
 plugin 'muck_engine', :git => "git://github.com/jbasdf/muck_engine.git", :submodule => true
 rake('muck_engine:sync')
 
-plugin 'muck_user_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
+plugin 'muck_users_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
 rake('muck_users_engine:sync')
 
 #====================
@@ -55,40 +58,8 @@ rake('gems:unpack:dependencies') if unpack_gems
 run "sudo gem install capistrano" if install_capistrano
 
 #==================== 
-# build custom files 
+# build application files 
 #====================
-
-file 'app/models/user.rb',
-%Q{class User < ActiveRecord::Base
-  
-  acts_as_authenticated_user
-  #{ 'acts_as_tagger' if install_tagging }
-  
-  has_permalink :login, :url_key
-
-  def short_name
-    self.first_name || login
-  end
-  
-  def full_name
-    if self.first_name.blank? && self.last_name.blank?
-      self.login rescue 'Deleted user'
-    else
-      ((self.first_name || '') + ' ' + (self.last_name || '')).strip
-    end
-  end
-
-  def to_param
-    self.url_key
-  end
-
-  def display_name
-    h(self.login)
-  end
-  
-end
-}
-
 
 file 'db/migrate/20090327231918_create_users.rb',
 %q{class CreateUsers < ActiveRecord::Migration
@@ -385,14 +356,65 @@ run 'rm public/images/rails.png'
  
 
 #==================== 
-# Rake tasks
+# clean up javascript 
+#====================
+run "rm public/javascripts/jquery.js"
+run "rm public/javascripts/jquery-ui.js"
+run "mv public/javascripts/jrails.js public/javascripts/jquery/jrails.js"
+
 #==================== 
+# Setup database
+#==================== 
+
+# make the db
+rake('db:create:all')
+
+# create sessions
 rake('db:sessions:create') # Use database (active record) session store
-rake('db:create')
-rake('db:migrate')
+
 # Generate OpenID authentication keys
 rake('open_id_authentication:db:create')
+
+# initial migration
+rake('db:migrate')
 rake('db:test:prepare')
+
+
+#==================== 
+# Build custom application files
+#====================
+
+file 'app/models/user.rb',
+%Q{class User < ActiveRecord::Base
+  
+  acts_as_authenticated_user
+  #{ 'acts_as_tagger' if install_tagging }
+  
+  has_permalink :login, :url_key
+
+  def short_name
+    self.first_name || login
+  end
+  
+  def full_name
+    if self.first_name.blank? && self.last_name.blank?
+      self.login rescue 'Deleted user'
+    else
+      ((self.first_name || '') + ' ' + (self.last_name || '')).strip
+    end
+  end
+
+  def to_param
+    self.url_key
+  end
+
+  def display_name
+    h(self.login)
+  end
+  
+end
+}
+
 
 #==================== 
 # Setup git
@@ -421,10 +443,10 @@ git :commit => "-a -m 'Initial commit'"
 # Initialize submodules
 git :submodule => "init"
 
-# if ask('setup submodules for development? (y/n)') 
-#   run "vendor/plugins/muck_engine/git remote add push git@github.com:jbasdf/muck_engine.git"
-#   run "vendor/plugins/muck_users_engine/git remote add push git@github.com:jbasdf/muck_users_engine.git"
-# end
+if setup_submodules_for_development
+  run "cd vendor/plugins/muck_engine; git remote add my git@github.com:jbasdf/muck_engine.git"
+  run "cd ../muck_users_engine; git remote add my git@github.com:jbasdf/muck_users_engine.git"
+end
  
 # Success!
 puts "SUCCESS!"
