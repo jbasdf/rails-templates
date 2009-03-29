@@ -18,12 +18,13 @@ git :init
 #====================
 plugin 'paperclip', :git => "git://github.com/thoughtbot/paperclip.git"
 plugin 'hoptoad_notifier', :git => "git://github.com/thoughtbot/hoptoad_notifier.git"
-plugin 'recaptcha', :git => "http://github.com/ambethia/recaptcha/tree/master"
+plugin 'recaptcha', :git => "git://github.com/ambethia/recaptcha.git"
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
 plugin 'open_id_authentication', :git => 'git://github.com/rails/open_id_authentication.git'
 plugin 'jquery', :svn => "http://ennerchi.googlecode.com/svn/trunk/plugins/jrails"
-
+plugin 'validation_reflection', :git => "git://github.com/redinger/validation_reflection.git"
 plugin 'permalink_fu', :git => "git://github.com/technoweenie/permalink_fu.git" 
+
 plugin 'acts-as-taggable-on', :git => "git://github.com/mbleigh/acts-as-taggable-on.git" if install_tagging
 
 # muck engines
@@ -359,6 +360,12 @@ initializer 'hoptoad.rb',
   config.api_key = 'GET A HOPTOAD KEY(TODO)'
 end  
 }
+
+initializer 'recaptch.rb',
+%q{if GlobalConfig.use_recaptcha
+  ENV['RECAPTCHA_PUBLIC_KEY'] = GlobalConfig.recaptcha_pub_key
+  ENV['RECAPTCHA_PRIVATE_KEY'] = GlobalConfig.recaptcha_priv_key
+end}
 
 
 #==================== 
