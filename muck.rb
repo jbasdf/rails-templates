@@ -1,6 +1,7 @@
 app_name = ask("What do you want to call your application?")
 domain_name = ask("What domain name would you like for your application? (ie example.com)")
 install_tagging = true if yes?('Install Tagging? (y/n)')
+install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
 install_gems = false #true if yes?('Install gems on local system? (y/n)')
 unpack_gems = false #true if yes?('Unpack gems into vendor directory? (y/n)')
 install_capistrano = false #true if yes?('Install capistrano? (y/n)')
@@ -31,6 +32,9 @@ rake('muck_engine:sync')
 
 plugin 'muck_users_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
 rake('muck_users_engine:sync')
+
+plugin 'cms_lite', :git => "git://github.com/jbasdf/cms_lite.git ", :submodule => true if install_cms_lite
+
 
 #====================
 # gems 
@@ -205,6 +209,16 @@ test:
 }
 
 
+def output_cms_lite(install_cms_lite)
+  return if !install_cms_lite
+  %Q{
+  # uncomment this method if you would like to add directories to cms lite
+  #def setup_cms_lite
+    # this will be called by the cms lite plugin
+    # prepend_cms_lite_path(File.join(RAILS_ROOT, 'content', 'help'))
+  #end}  
+end
+
 file 'app/controllers/application_controller.rb',
 %Q{class ApplicationController < ActionController::Base
   
@@ -234,6 +248,7 @@ file 'app/controllers/application_controller.rb',
     render :file => File.join(RAILS_ROOT, 'public', '404.html'), :status => 404
   end
 
+  #{output_cms_lite(install_cms_lite)}
   private
   def set_body_class
     @body_class ||= "body"
@@ -416,6 +431,252 @@ end
 }
 
 
+file 'app/controllers/default_controller.rb',
+%q{class DefaultController < ApplicationController
+
+  def index
+    respond_to do |format|
+      format.html { render }
+    end
+  end
+
+  def contact
+    return unless request.post?
+    body = []
+    params.each_pair { |k,v| body << "#{k}: #{v}"  }
+    HomeMailer.deliver_mail(:subject => I18n.t("contact.contact_response_subject", :application_name => GlobalConfig.application_name), :body=>body.join("\n"))
+    flash[:notice] = I18n.t('general.thank_you_contact')
+    redirect_to contact_url    
+  end
+
+  def sitemap
+    respond_to do |format|
+      format.html { render }
+    end
+  end
+
+  def ping
+    user = User.first
+    render :text => 'we are up'
+  end
+  
+end
+}
+
+
+file 'app/views/default/index.html.erb',
+%q{Welcome home}
+
+
+file 'app/views/default/contact.html.erb',
+%q{<div id="contact">
+
+	<h2><%= I18n.t('contact.contact_us') %></h2>
+
+	<form action="/contact/" method="post">
+	
+	  <div class="row clear">
+	    <label for="form_name"><%= I18n.t('contact.name') %></label>
+	    <div class="formHelp"><%= I18n.t('contact.name_help') %></div>
+	    <input type="text" id="form_name" name="name" />
+	  </div>
+
+	  <div class="row clear">
+	    <label for="form_phone"><%= I18n.t('contact.phone') %></label>
+			<div class="formHelp"><%= I18n.t('contact.phone_help') %></div>
+	    <input type="text" id="form_phone" name="phone" />
+	  </div>
+
+	  <div class="row clear">
+	    <label for="form_email"><%= I18n.t('contact.email') %></label>
+			<div class="formHelp"><%= I18n.t('contact.email_help') %></div>
+	    <input type="text" id="form_email" name="email" />
+	  </div>
+
+	  <div class="row clear">
+	    <label for="form_message"><%= I18n.t('contact.subject') %></label>
+			<div class="formHelp"><%= I18n.t('contact.subject_help') %></div>
+	    <input type="text" id="form_email" name="email" />
+	  </div>
+	
+	  <div class="row clear">
+	    <label for="form_message"><%= I18n.t('contact.question') %></label>
+	    <div class="formHelp"><%= I18n.t('contact.question_help') %></div>
+			<textarea id="form_message" name="message"></textarea>
+	  </div>
+
+	  <input type="submit" value="<%= I18n.t('general.send') %>" class="button"/>
+  
+	  <div class="clear"></div>
+
+	</form>
+		
+</div>}
+
+file 'config/locales/en.yml',
+%q{en:
+  contact: 
+    contact_us: 'Contact Us'
+    name: 'Your name:'
+    name_help: 'Please provide us with your name.'
+    phone: 'Your phone number:'
+    phone_help: 'Your phone number is optional but will help us contact you if necessary.'
+    email: 'Your email:'
+    email_help: 'Please provide us with your email so that we can contact you if necessary.'
+    subject: 'Subject:'
+    subject_help: 'A simple statement indicating the nature of your feedback.'
+    question: 'Your message/question:'
+    question_help: 'Please include any comments you would like us to hear.'
+    contact_response_subject: 'Thanks for your inquiry from {{application_name}}!'
+  general:
+    thank_you_contact: 'Thank you for your message.  A member of our team will respond to you shortly.'
+    send: 'Send'
+}
+
+
+def add_cms_lite_routes(install_cms_lite)
+  return if !install_cms_lite
+  %q{map.content '/content/*content_page', :controller => 'cms_lite', :action => 'show_page'
+  map.protected_page '/protected/*content_page', :controller => 'cms_lite', :action => 'show_protected_page'}
+end
+
+#==================== 
+# Build routes file
+#====================
+file 'config/routes.rb',
+%Q{ActionController::Routing::Routes.draw do |map|
+
+  map.home '', :controller => 'default', :action => 'index'
+  map.root :controller => 'default', :action => 'index'
+
+  # top level pages
+  map.contact '/contact', :controller => 'default', :action => 'contact'
+  map.sitemap '/sitemap', :controller => 'default', :action => 'sitemap'
+  map.ping '/ping', :controller => 'default', :action => 'ping'
+  
+  #{add_cms_lite_routes(install_cms_lite)}
+
+  # Install the default routes as the lowest priority.
+  map.connect ':controller/:action/:id'
+  map.connect ':controller/:action/:id.:format'
+end  
+}
+
+
+# ====================
+# Test files
+# ====================
+ 
+file 'test/shoulda_macros/forms.rb',
+%q{class Test::Unit::TestCase
+  def self.should_have_form(opts)
+    model = self.name.gsub(/ControllerTest$/, '').singularize.downcase
+    model = model[model.rindex('::')+2..model.size] if model.include?('::')
+    http_method, hidden_http_method = form_http_method opts[:method]
+    should "have a #{model} form" do
+      assert_select "form[action=?][method=#{http_method}]", eval(opts[:action]) do
+        if hidden_http_method
+          assert_select "input[type=hidden][name=_method][value=#{hidden_http_method}]"
+        end
+        opts[:fields].each do |attribute, type|
+          attribute = attribute.is_a?(Symbol) ? "#{model}[#{attribute.to_s}]" : attribute
+          assert_select "input[type=#{type.to_s}][name=?]", attribute
+        end
+        assert_select "input[type=submit]"
+      end
+    end
+  end
+
+  def self.form_http_method(http_method)
+    http_method = http_method.nil? ? 'post' : http_method.to_s
+    if http_method == "post" || http_method == "get"
+      return http_method, nil
+    else
+      return "post", http_method
+    end
+  end
+end
+}
+ 
+file 'test/shoulda_macros/pagination.rb',
+%q{class Test::Unit::TestCase
+  # Example:
+  # context "a GET to index logged in as admin" do
+  # setup do
+  # login_as_admin
+  # get :index
+  # end
+  # should_paginate_collection :users
+  # should_display_pagination
+  # end
+  def self.should_paginate_collection(collection_name)
+    should "paginate #{collection_name}" do
+      assert collection = assigns(collection_name),
+      "Controller isn't assigning to @#{collection_name.to_s}."
+      assert_kind_of WillPaginate::Collection, collection,
+      "@#{collection_name.to_s} isn't a WillPaginate collection."
+    end
+  end
+  def self.should_display_pagination
+    should "display pagination" do
+      assert_select "div.pagination", { :minimum => 1 },
+      "View isn't displaying pagination. Add <%= will_paginate @collection %>."
+    end
+  end
+  # Example:
+  # context "a GET to index not logged in as admin" do
+  # setup { get :index }
+  # should_not_paginate_collection :users
+  # should_not_display_pagination
+  # end
+  def self.should_not_paginate_collection(collection_name)
+    should "not paginate #{collection_name}" do
+      assert collection = assigns(collection_name),
+      "Controller isn't assigning to @#{collection_name.to_s}."
+      assert_not_equal WillPaginate::Collection, collection.class,
+      "@#{collection_name.to_s} is a WillPaginate collection."
+    end
+  end
+  def self.should_not_display_pagination
+    should "not display pagination" do
+      assert_select "div.pagination", { :count => 0 },
+      "View is displaying pagination. Check your logic."
+    end
+  end
+end
+}
+ 
+file 'test/test_helper.rb',
+%q{$:.reject! { |e| e.include? 'TextMate' }
+ENV["RAILS_ENV"] = "test"
+require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
+require File.expand_path(File.dirname(__FILE__) + '/test_definitions')
+require 'test_help'
+require 'factory_girl'
+require File.expand_path(File.dirname(__FILE__) + '/factories')
+class ActiveSupport::TestCase
+  
+  include TestDefinitions
+  self.use_transactional_fixtures = true
+  self.use_instantiated_fixtures  = false
+  self.backtrace_silencers << :rails_vendor
+  self.backtrace_filters << :rails_root
+  fixtures :all
+end
+}
+
+
+file 'test/factories.rb',
+%q{
+}
+
+file 'test/test_definitions.rb',
+%q{module TestDefinitions
+  NOT_LOGGED_IN_MSG = /You must be logged in to access this feature/i
+  PERMISSION_DENIED_MSG = /You don't have permission to do that/i
+end
+}
+
 #==================== 
 # Setup git
 #====================
@@ -444,8 +705,17 @@ git :commit => "-a -m 'Initial commit'"
 git :submodule => "init"
 
 if setup_submodules_for_development
-  run "cd vendor/plugins/muck_engine; git remote add my git@github.com:jbasdf/muck_engine.git"
-  run "cd ../muck_users_engine; git remote add my git@github.com:jbasdf/muck_users_engine.git"
+  inside ('vendor/plugins/muck_engine') do
+    run "git remote add my git@github.com:jbasdf/muck_engine.git"
+  end
+  inside ('vendor/plugins/muck_users_engine') do
+    run "git remote add my git@github.com:jbasdf/muck_users_engine.git"
+  end
+  if install_cms_lite
+    inside ('vendor/plugins/cms_lite') do
+      run "git remote add my git@github.com:jbasdf/cms_lite.git"
+    end
+  end
 end
  
 # Success!
