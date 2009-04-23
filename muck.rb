@@ -16,26 +16,31 @@ git :init
 #====================
 # plugins 
 #====================
-plugin 'paperclip', :git => "git://github.com/thoughtbot/paperclip.git"
 plugin 'hoptoad_notifier', :git => "git://github.com/thoughtbot/hoptoad_notifier.git"
 plugin 'recaptcha', :git => "git://github.com/ambethia/recaptcha.git"
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
 plugin 'open_id_authentication', :git => 'git://github.com/rails/open_id_authentication.git'
 plugin 'jquery', :svn => "http://ennerchi.googlecode.com/svn/trunk/plugins/jrails"
 plugin 'validation_reflection', :git => "git://github.com/redinger/validation_reflection.git"
-plugin 'permalink_fu', :git => "git://github.com/technoweenie/permalink_fu.git" 
+#plugin 'permalink_fu', :git => "git://github.com/technoweenie/permalink_fu.git" 
+plugin 'friendly_id', :git => "git://github.com/norman/friendly_id.git"
+
+plugin 'cells', :git => "git://github.com/apotonick/cells.git"
 
 plugin 'acts-as-taggable-on', :git => "git://github.com/mbleigh/acts-as-taggable-on.git" if install_tagging
 
 # muck engines
 plugin 'muck_engine', :git => "git://github.com/jbasdf/muck_engine.git", :submodule => true
-rake('muck_engine:sync')
+rake('muck:base:sync')
 
 plugin 'muck_users_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
-rake('muck_users_engine:sync')
+rake('muck:users:sync')
 
 plugin 'cms_lite', :git => "git://github.com/jbasdf/cms_lite.git ", :submodule => true if install_cms_lite
-
+# setup directories for cms lite
+run "mkdir content"
+run "mkdir content/pages"
+run "mkdir content/protected-pages"
 
 #====================
 # gems 
@@ -74,25 +79,33 @@ file 'db/migrate/20090327231918_create_users.rb',
       t.string   :email
       t.string   :first_name
       t.string   :last_name
-      t.string   :crypted_password,          :limit => 40
-      t.string   :salt,                      :limit => 40
-      t.string   :remember_token
-      t.datetime :remember_token_expires_at
-      t.string   :activation_code,           :limit => 40
-      t.datetime :activated_at
-      t.string   :password_reset_code,       :limit => 40
-      t.boolean  :enabled,                   :default => true
+      t.string   :crypted_password
+      t.string   :password_salt
+      t.string   :persistence_token,   :null => false
+      t.string   :single_access_token, :null => false
+      t.string   :perishable_token,    :null => false
+      t.integer  :login_count,         :null => false, :default => 0
+      t.integer  :failed_login_count,  :null => false, :default => 0
+      t.datetime :last_request_at                                   
+      t.datetime :current_login_at                                  
+      t.datetime :last_login_at                                     
+      t.string   :current_login_ip                                  
+      t.string   :last_login_ip
       t.boolean  :terms_of_service,          :default => false, :null => false
       t.string   :time_zone,                 :default => "UTC"
+      t.datetime :disabled_at
       t.datetime :created_at
+      t.datetime :activated_at
       t.datetime :updated_at
-      t.boolean  :is_active,                 :default => false
       t.string   :identity_url
       t.string   :url_key
     end
 
-    add_index "users", ["login"], :name => "index_users_on_login"
-    
+    add_index :users, :login
+    add_index :users, :email
+    add_index :users, :persistence_token
+    add_index :users, :last_request_at
+
   end
 
   def self.down
@@ -127,6 +140,7 @@ Rails::Initializer.run do |config|
   config.gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
   config.gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com'
   config.gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com'
+  config.gem "authlogic"
 
   # Only load the plugins named here, in the order given (default is alphabetical).
   # :all can be used as a placeholder for all plugins not explicitly named
@@ -227,14 +241,10 @@ file 'app/controllers/application_controller.rb',
     
   helper :all # include all helpers, all the time
   protect_from_forgery # See ActionController::RequestForgeryProtection for details
-
-  include HoptoadNotifier::Catcher
   
-  filter_parameter_logging :password, :password_confirmation
   rescue_from ActiveRecord::RecordNotFound, :with => :record_not_found
    
   before_filter :set_body_class
-  before_filter :login_from_cookie
   
   protected
 
@@ -361,7 +371,7 @@ initializer 'hoptoad.rb',
 end  
 }
 
-initializer 'recaptch.rb',
+initializer 'recaptcha.rb',
 %q{if GlobalConfig.use_recaptcha
   ENV['RECAPTCHA_PUBLIC_KEY'] = GlobalConfig.recaptcha_pub_key
   ENV['RECAPTCHA_PRIVATE_KEY'] = GlobalConfig.recaptcha_priv_key
@@ -409,10 +419,11 @@ rake('db:test:prepare')
 file 'app/models/user.rb',
 %Q{class User < ActiveRecord::Base
   
-  acts_as_authenticated_user
+  acts_as_authentic
+  acts_as_muck_user
   #{ 'acts_as_tagger' if install_tagging }
   
-  has_permalink :login, :url_key
+  has_friendly_id :login
 
   def short_name
     self.first_name || login
@@ -424,10 +435,6 @@ file 'app/models/user.rb',
     else
       ((self.first_name || '') + ' ' + (self.last_name || '')).strip
     end
-  end
-
-  def to_param
-    self.url_key
   end
 
   def display_name
