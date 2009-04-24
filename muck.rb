@@ -314,7 +314,7 @@ file 'app/views/layouts/default.html.erb',
   		<meta name="MSSmartTagsPreventParsing" content="true" />
       <%= stylesheet_link_tag %w{
             reset
-            screen
+            blueprint/screen
             styles
           }, :cache => true %>
       <%= stylesheet_link_tag 'blueprint/print.css', :media => "print" %>
@@ -323,10 +323,10 @@ file 'app/views/layouts/default.html.erb',
             jquery/jquery.js
             jquery/jquery-ui.js
             jquery/jrails.js
-            jquery.jgrowl.js
+            jquery/jquery.jgrowl.js
             jquery/jquery.tips.js
             application.js
-          }, :cache => all_js_cached %>
+          }, :cache => 'all_js_cached' %>
       <%= javascript_tag %[const AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
       <%= yield :head -%>
   	</head>
