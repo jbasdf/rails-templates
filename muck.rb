@@ -312,14 +312,21 @@ file 'app/views/layouts/default.html.erb',
   		<meta name="robots" content="all" />	
   		<meta name="resource-type" content="document" />
   		<meta name="MSSmartTagsPreventParsing" content="true" />
-  		<%= stylesheet_link_tag 'reset' %>
-  		<%= stylesheet_link_tag 'styles' %>
-  		<%= javascript_include_tag "jquery/jquery.js" %>
-      <%= javascript_include_tag "jquery/jquery-ui.js" %>
-      <%= javascript_include_tag "jquery/jrails.js" %>
-      <%= javascript_include_tag "jquery/jquery.jgrowl.js" %>
-      <%= javascript_include_tag "jquery/jquery.tips.js" %>
-      <%= javascript_include_tag "application.js" %>
+      <%= stylesheet_link_tag %w{
+            reset
+            screen
+            styles
+          }, :cache => true %>
+      <%= stylesheet_link_tag 'blueprint/print.css', :media => "print" %>
+      <!--[if IE]><%= stylesheet_link_tag "blueprint/ie.css", :media => "screen, projection" %><![endif]-->
+      <%= javascript_include_tag %w{
+            jquery/jquery.js
+            jquery/jquery-ui.js
+            jquery/jrails.js
+            jquery.jgrowl.js
+            jquery/jquery.tips.js
+            application.js
+          }, :cache => all_js_cached %>
       <%= javascript_tag %[const AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
       <%= yield :head -%>
   	</head>
