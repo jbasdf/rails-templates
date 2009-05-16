@@ -1,14 +1,14 @@
 install_muck_activity = true if yes?('Install activity system? (y/n)')
+install_file_uploads if yes?('Install file uploads? (y/n)')
+
 setup_submodules_for_development = true if yes?('Setup submodules for development?')
 
-plugin 'paperclip', :git => "git://github.com/thoughtbot/paperclip.git"
+plugin 'paperclip', :git => "git://github.com/thoughtbot/paperclip.git" if install_file_uploads
 
 # muck engines
 plugin 'muck_activity_engine', :git => "git://github.com/jbasdf/muck_activity_engine.git", :submodule => true
 rake('muck:activity:sync')
 
-# plugin 'muck_blurb_engine', :git => "git://github.com/jbasdf/muck_blurb_engine.git", :submodule => true
-# rake('muck:blurb:sync')
 
 # Initialize submodules
 git :submodule => "init"

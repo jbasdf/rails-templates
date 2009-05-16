@@ -19,48 +19,39 @@ git :init
 plugin 'hoptoad_notifier', :git => "git://github.com/thoughtbot/hoptoad_notifier.git"
 plugin 'recaptcha', :git => "git://github.com/ambethia/recaptcha.git"
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
-plugin 'open_id_authentication', :git => 'git://github.com/rails/open_id_authentication.git'
 plugin 'jquery', :svn => "http://ennerchi.googlecode.com/svn/trunk/plugins/jrails"
 plugin 'validation_reflection', :git => "git://github.com/redinger/validation_reflection.git"
-#plugin 'permalink_fu', :git => "git://github.com/technoweenie/permalink_fu.git" 
+plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attributes.git"
 plugin 'friendly_id', :git => "git://github.com/norman/friendly_id.git"
-
-plugin 'cells', :git => "git://github.com/apotonick/cells.git"
-
-plugin 'acts-as-taggable-on', :git => "git://github.com/mbleigh/acts-as-taggable-on.git" if install_tagging
 
 # muck engines
 plugin 'muck_engine', :git => "git://github.com/jbasdf/muck_engine.git", :submodule => true
-rake('muck:base:sync')
-
 plugin 'muck_users_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
-rake('muck:users:sync')
 
-plugin 'cms_lite', :git => "git://github.com/jbasdf/cms_lite.git ", :submodule => true if install_cms_lite
-# setup directories for cms lite
-run "mkdir content"
-run "mkdir content/pages"
-run "mkdir content/protected-pages"
+rake('muck:base:sync')
+rake('muck:db:populate_states_and_countries')
+rake('muck:users:sync')
+rake('muck:users:create_admin')
 
 #====================
 # gems 
 #====================
+gem 'authlogic', :version => '>=2.0.9'
 gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com'
 gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com'
 gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
+gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.0.5'
+gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
+gem 'mbleigh-acts-as-taggable-on', :source => "http://gems.github.com", :lib => "acts-as-taggable-on" if install_tagging
+gem 'cms-lite' if install_cms_lite
 
-# optional
-# gem 'erubis'
-# gem 'rubyist-aasm'
-# gem 'ruby-openid', :lib => 'openid'
-# gem 'simple-rss'
-# gem 'fastercsv'
-# gem 'activemerchant', :lib => 'active_merchant'
-# gem 'aws-s3', :lib => 'aws/s3'
-  
 # Install gems on local system
 rake('gems:install', :sudo => true) if install_gems 
 rake('gems:unpack:dependencies') if unpack_gems
+
+# setup migrations
+
+run "script/generate acts_as_taggable_on_migration" if install_tagging
 
 #==================== 
 # Install and configure capistrano 
@@ -139,6 +130,7 @@ Rails::Initializer.run do |config|
   # Specify gems that this application depends on and have them installed with rake gems:install
   config.gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
   config.gem "authlogic"
+  config.gem "bcrypt-ruby", :lib => "bcrypt", :version => ">=2.0.5"
 
   # Only load the plugins named here, in the order given (default is alphabetical).
   # :all can be used as a placeholder for all plugins not explicitly named
@@ -192,9 +184,15 @@ config.action_mailer.delivery_method = :test
 # This is necessary if your schema can't be completely dumped by the schema dumper,
 # like if you have constraints or database-specific column types
 # config.active_record.schema_format = :sql
-  
+
+config.gem 'mocha', :version => '>= 0.9.5'
 config.gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com'
 config.gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com'
+
+require 'factory_girl'
+require 'mocha'
+begin require 'redgreen'; rescue LoadError; end
+
 }
 
 file 'config/global_config.yml',
@@ -202,25 +200,28 @@ file 'config/global_config.yml',
 
   # Sent in emails to users
   application_name: '#{app_name}'
-
+  from_email: 'support@#{domain_name}'
+  support_email: 'support@#{domain_name}'
+  admin_email: 'admin@#{domain_name}'
+  customer_service_number: '1-800-'
+  
   # Email charset
   mail_charset: 'utf-8'
 
-  automatically_activate: false
-  send_welcome: true
-  allow_anonymous_commenting: false
+  automatically_activate: true
   automatically_login_after_account_create: true
-  
+  send_welcome: true
+
   # if you use recaptcha you will need to also provide a public and private
   # key available from http://recaptcha.net.
   use_recaptcha: true
   recaptcha_pub_key: GET_A_RECAPTCHA_KEY(TODO)
   recaptcha_priv_key: GET_A_RECAPTCHA_KEY(TODO)
   
-  growl: true 
+  growl: true
   
-  support_email: 'support@#{domain_name}.com'
-  customer_service_number: '1-800-'
+  # application configuration
+  let_users_delete_their_account: false  # turn on/off ability for users to delete their own account
   
 production:
   <<: *DEFAULT
@@ -255,20 +256,10 @@ test:
   application_url: 'localhost:3000'
 }
 
-
-def output_cms_lite(install_cms_lite)
-  return if !install_cms_lite
-  %Q{
-  # uncomment this method if you would like to add directories to cms lite
-  #def setup_cms_lite
-    # this will be called by the cms lite plugin
-    # prepend_cms_lite_path(File.join(RAILS_ROOT, 'content', 'help'))
-  #end}  
-end
-
 file 'app/controllers/application_controller.rb',
 %Q{class ApplicationController < ActionController::Base
   
+  include SslRequirement
   layout 'default'
     
   helper :all # include all helpers, all the time
@@ -279,7 +270,15 @@ file 'app/controllers/application_controller.rb',
   before_filter :set_body_class
   
   protected
-
+  
+  # only require ssl if we are in production
+  def ssl_required?
+    return ENV['SSL'] == 'on' ? true : false if defined? ENV['SSL']
+    return false if local_request?
+    return false if RAILS_ENV == 'test'
+    ((self.class.read_inheritable_attribute(:ssl_required_actions) || []).include?(action_name.to_sym)) && (RAILS_ENV == 'production' || RAILS_ENV == 'staging')
+  end
+  
   def setup_paging
     @page = (params[:page] || 1).to_i
     @page = 1 if @page < 1
@@ -291,7 +290,6 @@ file 'app/controllers/application_controller.rb',
     render :file => File.join(RAILS_ROOT, 'public', '404.html'), :status => 404
   end
 
-  #{output_cms_lite(install_cms_lite)}
   private
   def set_body_class
     @body_class ||= "body"
@@ -300,6 +298,18 @@ file 'app/controllers/application_controller.rb',
 end
 }
 
+file_inject 'app/helpers/application_helper.rb', 'module ApplicationHelper', <<-CODE
+  def secure_mail_to(email)
+    mail_to email, nil, :encode => 'javascript'
+  end
+CODE
+
+if install_cms_lite
+  file_append 'Rakefile', <<-CODE
+    require 'cms_lite'
+    require 'cms_lite/tasks'
+  CODE
+end
 
 file 'app/views/layouts/default.html.erb',
 %q{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -416,6 +426,18 @@ initializer 'recaptcha.rb',
   ENV['RECAPTCHA_PRIVATE_KEY'] = GlobalConfig.recaptcha_priv_key
 end}
 
+initializer 'protect_attributes.rb',
+%q{module ActiveRecord
+  class Base
+    private
+      def attributes_protected_by_default
+        default = [ self.class.primary_key, self.class.inheritance_column ]
+        default.concat ['created_at', 'created_on', 'updated_at', 'updated_on']
+        default << 'id' unless self.class.primary_key.eql? 'id'
+        default
+      end
+  end
+end}
 
 #==================== 
 # remove default files 
@@ -442,9 +464,6 @@ rake('db:create:all')
 
 # create sessions
 rake('db:sessions:create') # Use database (active record) session store
-
-# Generate OpenID authentication keys
-rake('open_id_authentication:db:create')
 
 # initial migration
 rake('db:migrate')
@@ -483,6 +502,10 @@ file 'app/models/user.rb',
 end
 }
 
+file 'app/models/user_session.rb',
+%Q{class UserSession < Authlogic::Session::Base
+end
+}
 
 file 'app/controllers/default_controller.rb',
 %q{class DefaultController < ApplicationController
@@ -586,13 +609,6 @@ file 'config/locales/en.yml',
     send: 'Send'
 }
 
-
-def add_cms_lite_routes(install_cms_lite)
-  return if !install_cms_lite
-  %q{map.content '/content/*content_page', :controller => 'cms_lite', :action => 'show_page'
-  map.protected_page '/protected/*content_page', :controller => 'cms_lite', :action => 'show_protected_page'}
-end
-
 #==================== 
 # Build routes file
 #====================
@@ -607,12 +623,7 @@ file 'config/routes.rb',
   map.sitemap '/sitemap', :controller => 'default', :action => 'sitemap'
   map.ping '/ping', :controller => 'default', :action => 'ping'
   
-  #{add_cms_lite_routes(install_cms_lite)}
-
-  # Install the default routes as the lowest priority.
-  map.connect ':controller/:action/:id'
-  map.connect ':controller/:action/:id.:format'
-end  
+end
 }
 
 
@@ -763,11 +774,6 @@ if setup_submodules_for_development
   end
   inside ('vendor/plugins/muck_users_engine') do
     run "git remote add my git@github.com:jbasdf/muck_users_engine.git"
-  end
-  if install_cms_lite
-    inside ('vendor/plugins/cms_lite') do
-      run "git remote add my git@github.com:jbasdf/cms_lite.git"
-    end
   end
 end
  
