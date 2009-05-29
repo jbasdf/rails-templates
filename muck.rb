@@ -1,7 +1,6 @@
 app_name = ask("What do you want to call your application?")
 domain_name = ask("What domain name would you like for your application? (ie example.com)")
 install_tagging = true if yes?('Install Tagging? (y/n)')
-install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
 install_gems = false #true if yes?('Install gems on local system? (y/n)')
 unpack_gems = false #true if yes?('Unpack gems into vendor directory? (y/n)')
 install_capistrano = false #true if yes?('Install capistrano? (y/n)')
@@ -28,11 +27,6 @@ plugin 'friendly_id', :git => "git://github.com/norman/friendly_id.git"
 plugin 'muck_engine', :git => "git://github.com/jbasdf/muck_engine.git", :submodule => true
 plugin 'muck_users_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
 
-rake('muck:base:sync')
-rake('muck:db:populate_states_and_countries')
-rake('muck:users:sync')
-rake('muck:users:create_admin')
-
 #====================
 # gems 
 #====================
@@ -43,7 +37,6 @@ gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.git
 gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.0.5'
 gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
 gem 'mbleigh-acts-as-taggable-on', :source => "http://gems.github.com", :lib => "acts-as-taggable-on" if install_tagging
-gem 'cms-lite' if install_cms_lite
 
 # Install gems on local system
 rake('gems:install', :sudo => true) if install_gems 
@@ -298,18 +291,11 @@ file 'app/controllers/application_controller.rb',
 end
 }
 
-file_inject 'app/helpers/application_helper.rb', 'module ApplicationHelper', <<-CODE
-  def secure_mail_to(email)
-    mail_to email, nil, :encode => 'javascript'
-  end
-CODE
-
-if install_cms_lite
-  file_append 'Rakefile', <<-CODE
-    require 'cms_lite'
-    require 'cms_lite/tasks'
-  CODE
+file 'app/helpers/application_helper.rb',
+%Q{module ApplicationHelper
+  #{'include TagsHelper' if install_tagging }
 end
+}
 
 file 'app/views/layouts/default.html.erb',
 %q{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -438,37 +424,6 @@ initializer 'protect_attributes.rb',
       end
   end
 end}
-
-#==================== 
-# remove default files 
-#====================
-run "rm README"
-run "rm public/index.html"
-run "rm public/favicon.ico"
-run 'rm public/images/rails.png'
- 
-
-#==================== 
-# clean up javascript 
-#====================
-run "rm public/javascripts/jquery.js"
-run "rm public/javascripts/jquery-ui.js"
-run "mv public/javascripts/jrails.js public/javascripts/jquery/jrails.js"
-
-#==================== 
-# Setup database
-#==================== 
-
-# make the db
-rake('db:create:all')
-
-# create sessions
-rake('db:sessions:create') # Use database (active record) session store
-
-# initial migration
-rake('db:migrate')
-rake('db:test:prepare')
-
 
 #==================== 
 # Build custom application files
@@ -740,6 +695,47 @@ file 'test/test_definitions.rb',
   PERMISSION_DENIED_MSG = /You don't have permission to do that/i
 end
 }
+
+#==================== 
+# Muck sync tasks
+#==================== 
+rake('muck:base:sync')
+rake('muck:users:sync')
+
+#==================== 
+# Setup database
+#==================== 
+
+# create sessions
+rake('db:sessions:create') # Use database (active record) session store
+
+# make the db
+rake('db:create:all')
+
+# initial migration
+rake('db:migrate')
+rake('db:test:prepare')
+
+#==================== 
+# muck db tasks
+#==================== 
+rake('muck:db:populate_states_and_countries')
+rake('muck:users:create_admin')
+
+#==================== 
+# remove default files 
+#====================
+run "rm README"
+run "rm public/index.html"
+run "rm public/favicon.ico"
+run 'rm public/images/rails.png'
+
+#==================== 
+# clean up javascript 
+#====================
+run "rm public/javascripts/jquery.js"
+run "rm public/javascripts/jquery-ui.js"
+run "mv public/javascripts/jrails.js public/javascripts/jquery/jrails.js"
 
 #==================== 
 # Setup git
