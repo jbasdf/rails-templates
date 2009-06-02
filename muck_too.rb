@@ -19,6 +19,7 @@ install_muck_activity = true if yes?('Install activity system? (y/n)')
 install_file_uploads if yes?('Install file uploads? (y/n)')
 install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
 install_solr = true if yes?('Install Acts As Solr? (y/n)')
+install_disguise = true if yes?('Install disguise theme engine? (y/n)')
 setup_submodules_for_development = true if yes?('Setup submodules for development?')
 
 #====================
@@ -26,6 +27,7 @@ setup_submodules_for_development = true if yes?('Setup submodules for developmen
 #====================
 gem 'cms-lite' if install_cms_lite
 gem 'uploader' if install_file_uploads
+gem 'disguise' if install_disguise
 
 #====================
 # plugins 
@@ -52,6 +54,18 @@ if install_cms_lite
     require 'cms_lite/tasks'
   CODE
 end
+
+#====================
+# disguise
+#====================
+if disguise
+  file_append 'Rakefile', <<-CODE
+    require 'disguise/tasks'
+  CODE
+  rake('disguise:setup')
+  rake('db:migrate')
+end
+
 
 #====================
 # uploader
