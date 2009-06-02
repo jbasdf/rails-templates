@@ -358,7 +358,7 @@ load 'config/deploy'
 file 'config/database.yml',
 %Q{development:
   adapter: mysql
-  database: #{app_name}_development
+  database: #{app_safe_name}_development
   username: root
   password:
   host: localhost
@@ -366,7 +366,7 @@ file 'config/database.yml',
 
 test:
   adapter: mysql
-  database: #{app_name}_test
+  database: #{app_safe_name}_test
   username: root
   password:
   host: localhost
@@ -374,8 +374,8 @@ test:
 
 staging:
   adapter: mysql
-  database: #{app_name}_staging
-  username: #{app_name}
+  database: #{app_safe_name}_staging
+  username: #{app_safe_name}
   password: 
   host: localhost
   encoding: utf8
@@ -383,8 +383,8 @@ staging:
 
 production:
   adapter: mysql
-  database: #{app_name}_production
-  username: #{app_name}
+  database: #{app_safe_name}_production
+  username: #{app_safe_name}
   password: 
   host: localhost
   encoding: utf8
