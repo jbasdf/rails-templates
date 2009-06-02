@@ -1,4 +1,5 @@
-app_name = ask("What do you want to call your application?")
+app_name = ask("What do you want to call your application? (ie George The App)")
+app_safe_name = ask("Application safe name? (ie george_the_app)")
 domain_name = ask("What domain name would you like for your application? (ie example.com)")
 install_tagging = true if yes?('Install Tagging? (y/n)')
 install_gems = false #true if yes?('Install gems on local system? (y/n)')
