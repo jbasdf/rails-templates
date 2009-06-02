@@ -30,7 +30,7 @@ plugin 'muck_users_engine', :git => "git://github.com/jbasdf/muck_users_engine.g
 #====================
 # gems 
 #====================
-gem 'authlogic', :version => '>=2.0.9'
+gem 'authlogic', :version => '>=2.0.13'
 gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com'
 gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com'
 gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
