@@ -1,0 +1,22 @@
+Muck
+==========
+
+The easiest way to get started with muck is to generate your application using a template:
+  $ rails <your-app> -m http://github.com/jbasdf/rails-templates/raw/master/muck.rb
+
+Add optional functionality with the following command:
+  $ rake rails:template LOCATION=http://github.com/jbasdf/rails-templates/raw/master/mucktoo.rb
+
+Layout
+=======
+The muck template will build your basic application and construct all the needed files and configuration.
+
+If you build your own layout be sure to include the following script in your layout or the javascript in the system won't work:
+  <script type="text/javascript" language="JavaScript">
+    <%= yield :javascript %>
+  </script>
+
+
+
+
+Copyright (c) 2009 Justin Ball, released under the MIT license
