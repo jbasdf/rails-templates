@@ -125,8 +125,10 @@ Rails::Initializer.run do |config|
   config.gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
   config.gem "authlogic"
   config.gem "bcrypt-ruby", :lib => "bcrypt", :version => ">=2.0.5"
-
-  # Only load the plugins named here, in the order given (default is alphabetical).
+  config.gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
+} + 
+%Q{ #{" config.gem 'mbleigh-acts-as-taggable-on', :lib => 'acts-as-taggable-on', :source => 'http://gems.github.com'" if install_tagging} } +
+%q{# Only load the plugins named here, in the order given (default is alphabetical).
   # :all can be used as a placeholder for all plugins not explicitly named
   # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
 

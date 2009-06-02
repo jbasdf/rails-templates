@@ -16,7 +16,7 @@ end
 
 
 install_muck_activity = true if yes?('Install activity system? (y/n)')
-install_file_uploads if yes?('Install file uploads? (y/n)')
+install_file_uploads = true if yes?('Install file uploads? (y/n)')
 install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
 install_solr = true if yes?('Install Acts As Solr? (y/n)')
 install_disguise = true if yes?('Install disguise theme engine? (y/n)')
@@ -25,7 +25,7 @@ setup_submodules_for_development = true if yes?('Setup submodules for developmen
 #====================
 # gems 
 #====================
-gem 'cms-lite' if install_cms_lite
+gem 'cms-lite', :lib => 'cms_lite' if install_cms_lite
 gem 'uploader' if install_file_uploads
 gem 'disguise' if install_disguise
 
@@ -37,13 +37,17 @@ gem 'disguise' if install_disguise
 #====================
 # stuff we tweaked
 #====================
-plugin 'acts_as_solr', :git => "git://github.com/oxtralite/acts_as_solr.git", :submodule => true if install_solr
+if install_solr
+  plugin 'acts_as_solr', :git => "git://github.com/oxtralite/acts_as_solr.git", :submodule => true
+end
 
 #====================
 # muck activity engine
 #====================
-plugin 'muck_activity_engine', :git => "git://github.com/jbasdf/muck_activity_engine.git", :submodule => true
-rake('muck:activity:sync')
+if install_muck_activity
+  plugin 'muck_activity_engine', :git => "git://github.com/jbasdf/muck_activity_engine.git", :submodule => true
+  rake('muck:activity:sync')
+end
 
 #====================
 # cms lite
@@ -58,7 +62,7 @@ end
 #====================
 # disguise
 #====================
-if disguise
+if install_disguise
   file_append 'Rakefile', <<-CODE
     require 'disguise/tasks'
   CODE
