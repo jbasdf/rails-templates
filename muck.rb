@@ -38,7 +38,8 @@ gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.git
 gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.0.5'
 gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
 gem 'mbleigh-acts-as-taggable-on', :source => "http://gems.github.com", :lib => "acts-as-taggable-on" if install_tagging
-
+gem "binarylogic-searchlogic", :lib => 'searchlogic', :source => 'http://gems.github.com', :version => '~> 2.0.0'
+    
 # Install gems on local system
 rake('gems:install', :sudo => true) if install_gems 
 rake('gems:unpack:dependencies') if unpack_gems
@@ -214,10 +215,15 @@ file 'config/global_config.yml',
   recaptcha_pub_key: GET_A_RECAPTCHA_KEY(TODO)
   recaptcha_priv_key: GET_A_RECAPTCHA_KEY(TODO)
   
-  growl: true
+  # jgrowl related settings
+  growl_enabled: true
+  growl_flash_messages: false
+  growl_ar_errors: false
   
   # application configuration
   let_users_delete_their_account: false  # turn on/off ability for users to delete their own account
+  enable_live_activity_updates: true # Turns on polling inside the user's activity feed so they constantly get updates from the site
+
   
 production:
   <<: *DEFAULT
