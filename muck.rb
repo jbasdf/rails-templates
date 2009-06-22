@@ -1,12 +1,16 @@
+def file_append(file, data)
+  log 'file_append', file
+  append_file(file, data)
+end
+
 app_name = ask("What do you want to call your application? (ie George The App)")
 app_safe_name = ask("Application safe name? (ie george_the_app)")
 domain_name = ask("What domain name would you like for your application? (ie example.com)")
-install_tagging = true if yes?('Install Tagging? (y/n)')
 install_gems = false #true if yes?('Install gems on local system? (y/n)')
 unpack_gems = false #true if yes?('Unpack gems into vendor directory? (y/n)')
 install_capistrano = false #true if yes?('Install capistrano? (y/n)')
 
-setup_submodules_for_development = true if ask('Setup submodules for development?  You must have dev access to muck to do this. (y/n)') 
+#setup_submodules_for_development = true if ask('Setup submodules for development?  You must have dev access to muck to do this. (y/n)') 
 
 #====================
 # Setup git.  Without this submodules wont' work
@@ -24,34 +28,37 @@ plugin 'validation_reflection', :git => "git://github.com/redinger/validation_re
 plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attributes.git"
 plugin 'friendly_id', :git => "git://github.com/norman/friendly_id.git"
 
-# muck engines
-plugin 'muck_engine', :git => "git://github.com/jbasdf/muck_engine.git", :submodule => true
-plugin 'muck_users_engine', :git => "git://github.com/jbasdf/muck_users_engine.git", :submodule => true
-
 #====================
 # gems 
 #====================
 gem 'authlogic', :version => '>=2.0.13'
+gem "binarylogic-searchlogic", :lib => 'searchlogic', :source  => 'http://gems.github.com', :version => '~> 2.0.0'
 gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com'
 gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com'
 gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
 gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.0.5'
 gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
-gem 'mbleigh-acts-as-taggable-on', :source => "http://gems.github.com", :lib => "acts-as-taggable-on" if install_tagging
 gem "binarylogic-searchlogic", :lib => 'searchlogic', :source => 'http://gems.github.com', :version => '~> 2.0.0'
-    
+gem 'muck-engine', :lib => 'muck_engine'
+gem 'muck-users', :lib => 'muck_users'
+
 # Install gems on local system
 rake('gems:install', :sudo => true) if install_gems 
 rake('gems:unpack:dependencies') if unpack_gems
 
-# setup migrations
-
-run "script/generate acts_as_taggable_on_migration" if install_tagging
 
 #==================== 
 # Install and configure capistrano 
 #====================
 run "sudo gem install capistrano" if install_capistrano
+
+#==================== 
+# Add rake tasks
+#====================
+file_append 'Rakefile', <<-CODE
+require 'muck_engine/tasks'
+require 'muck_users/tasks'
+CODE
 
 #==================== 
 # build application files 
@@ -125,11 +132,13 @@ Rails::Initializer.run do |config|
   # Specify gems that this application depends on and have them installed with rake gems:install
   config.gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
   config.gem "authlogic"
+  config.gem "binarylogic-searchlogic", :lib => 'searchlogic', :source  => 'http://gems.github.com', :version => '~> 2.0.0'
   config.gem "bcrypt-ruby", :lib => "bcrypt", :version => ">=2.0.5"
   config.gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
-} + 
-%Q{ #{" config.gem 'mbleigh-acts-as-taggable-on', :lib => 'acts-as-taggable-on', :source => 'http://gems.github.com'" if install_tagging} } +
-%q{# Only load the plugins named here, in the order given (default is alphabetical).
+  config.gem 'muck-engine', :lib => 'muck_engine'
+  config.gem 'muck-users', :lib => 'muck_users'
+
+  # Only load the plugins named here, in the order given (default is alphabetical).
   # :all can be used as a placeholder for all plugins not explicitly named
   # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
 
@@ -300,12 +309,6 @@ file 'app/controllers/application_controller.rb',
 end
 }
 
-file 'app/helpers/application_helper.rb',
-%Q{module ApplicationHelper
-  #{'include TagsHelper' if install_tagging }
-end
-}
-
 file 'app/views/layouts/default.html.erb',
 %q{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
@@ -443,8 +446,7 @@ file 'app/models/user.rb',
   
   acts_as_authentic
   acts_as_muck_user
-  #{ 'acts_as_tagger' if install_tagging }
-  
+    
   has_friendly_id :login
 
   def short_name
@@ -728,7 +730,7 @@ rake('db:test:prepare')
 #==================== 
 # muck db tasks
 #==================== 
-rake('muck:db:populate_states_and_countries')
+rake('muck:db:populate ')
 rake('muck:users:create_admin')
 
 #==================== 
@@ -770,17 +772,17 @@ END
 git :add => '.'
 git :commit => "-a -m 'Initial commit'"
 
-# Initialize submodules
-git :submodule => "init"
+# # Initialize submodules
+# git :submodule => "init"
 
-if setup_submodules_for_development
-  inside ('vendor/plugins/muck_engine') do
-    run "git remote add my git@github.com:jbasdf/muck_engine.git"
-  end
-  inside ('vendor/plugins/muck_users_engine') do
-    run "git remote add my git@github.com:jbasdf/muck_users_engine.git"
-  end
-end
+# if setup_submodules_for_development
+#   inside ('vendor/plugins/muck_engine') do
+#     run "git remote add my git@github.com:jbasdf/muck_engine.git"
+#   end
+#   inside ('vendor/plugins/muck_users_engine') do
+#     run "git remote add my git@github.com:jbasdf/muck_users_engine.git"
+#   end
+# end
  
 # Success!
 puts "SUCCESS!"

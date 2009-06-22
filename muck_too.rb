@@ -21,13 +21,13 @@ install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
 install_solr = true if yes?('Install Acts As Solr? (y/n)')
 install_disguise = true if yes?('Install disguise theme engine? (y/n)')
 install_muck_comments = true if yes?('Install muck comment engine?  This is required for the muck activity engine. (y/n)') || install_muck_activity
-setup_submodules_for_development = true if yes?('Setup submodules for development?')
+install_tagging = true if yes?('Install Tagging? (y/n)')
 
 #====================
 # stuff we tweaked
 #====================
 if install_solr
-  plugin 'acts_as_solr', :git => "git://github.com/oxtralite/acts_as_solr.git", :submodule => true
+  gem 'muck-solr', :lib => 'acts_as_solr'
 end
 
 #====================
@@ -35,10 +35,11 @@ end
 #====================
 if install_muck_profiles
   gem 'muck-profiles', :lib => 'muck_profiles'
+  
   file_append 'Rakefile', <<-CODE
     require 'muck_profiles/tasks'
   CODE
-  rake('muck:muck_profiles:sync')
+  rake('rake muck:profiles:sync')
   
   file 'app/models/profile.rb', <<-CODE
   class Profile < ActiveRecord::Base
@@ -186,19 +187,19 @@ if install_muck_comments
     require 'muck_comments/tasks'
   CODE
 
-  file_append 'config/routes.rb', <<-CODE
-    map.resources :comments
+  file_inject 'config/routes.rb', "map.root :controller => 'default', :action => 'index'", <<-CODE
+  map.resources :comments
   CODE
   
 end
 
-# Initialize submodules
-git :submodule => "init"
 
-if setup_submodules_for_development
-  if install_solr
-    inside ('vendor/plugins/acts_as_solr') do
-      run "git remote add my git@github.com:oxtralite/acts_as_solr.git"
-    end
-  end
+#====================
+# tagging
+#====================
+if install_tagging
+  gem 'mbleigh-acts-as-taggable-on', :source => "http://gems.github.com", :lib => "acts-as-taggable-on"
+  file_inject('app/helpers/application_helper.rb', 'module ApplicationHelper', 'include TagsHelper')
+  file_inject('app/models/user.rb', 'class User < ActiveRecord::Base', 'acts_as_tagger')
+  run "script/generate acts_as_taggable_on_migration"
 end
