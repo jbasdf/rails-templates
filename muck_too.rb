@@ -73,6 +73,8 @@ if install_muck_content
   end
   CODE
   
+  rake('muck:contents:sync')
+  
 end
 
 #====================
@@ -84,7 +86,7 @@ if install_muck_profiles
   file_append 'Rakefile', <<-CODE
     require 'muck_profiles/tasks'
   CODE
-  rake('rake muck:profiles:sync')
+  rake('muck:profiles:sync')
   
   file 'app/models/profile.rb', <<-CODE
   class Profile < ActiveRecord::Base
@@ -194,15 +196,17 @@ if install_file_uploads
                                       :thumb => "100>", 
                                       :small => "150>", 
                                       :medium => "300>", 
-                                      :large => "660>"},
+                                      :large => "660>" },
                         :default_url => "/images/profile_default.jpg",
                         :storage => :s3,
                         :s3_credentials => AMAZON_S3_CREDENTIALS,
-                        :bucket => "assets.\#{SITE[:domain]}",
-                        :s3_host_alias => "assets.\#{SITE[:domain]}",
+                        :bucket => "assets.#{GlobalConfig.application_url}",
+                        :s3_host_alias => "assets.#{GlobalConfig.application_url}",
                         :convert_options => {
                            :all => '-quality 80'
                          }
+                      },
+                      :s3_path => ':id_partition/:style/:basename.:extension'
   
   end
   CODE
