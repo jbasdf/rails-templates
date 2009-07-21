@@ -14,20 +14,65 @@ def file_inject(file_name, sentinel, string, before_after=:after)
   end
 end
 
+install_muck_content = true if yes?('Install content system? (y/n)')
 install_muck_activity = true if yes?('Install activity system? (y/n)')
 install_muck_profiles = true if yes?('Install profile system? (y/n)') || install_muck_activity
+install_muck_friends = true if yes?('Install friends system? (y/n)')
 install_file_uploads = true if yes?('Install file uploads? (y/n)')
 install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
-install_solr = true if yes?('Install Acts As Solr? (y/n)')
+install_solr = true if yes?('Install Acts As Solr? (y/n)') || install_muck_content
 install_disguise = true if yes?('Install disguise theme engine? (y/n)')
 install_muck_comments = true if yes?('Install muck comment engine?  This is required for the muck activity engine. (y/n)') || install_muck_activity
-install_tagging = true if yes?('Install Tagging? (y/n)')
+install_tagging = true if yes?('Install Tagging? (y/n)') || install_muck_content
 
 #====================
-# stuff we tweaked
+# muck solr
 #====================
 if install_solr
   gem 'muck-solr', :lib => 'acts_as_solr'
+end
+
+#====================
+# muck content engine
+#====================
+if install_muck_content
+  gem 'muck-contents', :lib => 'muck_contents'
+  
+  file_append 'Rakefile', <<-CODE
+    require 'muck_contents/tasks'
+  CODE
+  rake('rake muck:contents:sync')
+  
+  file 'app/models/content.rb', <<-CODE
+    class Content < ActiveRecord::Base
+      acts_as_muck_content(
+        :git_repository => GlobalConfig.content_git_repository,
+        :enable_auto_translations => GlobalConfig.enable_auto_translations,
+        :enable_solr => GlobalConfig.content_enable_solr
+      )
+  
+      # Add search to your content.  Be sure to install muck-solr or another acts_as_solr.  This is left
+      # for the model so that you can choose what kind of search to implement
+      acts_as_solr :fields => [ :search_content ]
+      def search_content
+        "\#{title} \#{body} \#{tags.collect{|t| t.name}.join(' ')}"
+      end
+    
+    end
+  CODE
+  
+  file 'app/models/content_translation.rb', <<-CODE
+  class ContentTranslation < ActiveRecord::Base
+    acts_as_muck_content_translation
+  end
+  CODE
+  
+  file 'app/models/content_permission.rb', <<-CODE
+  class ContentPermission < ActiveRecord::Base
+    acts_as_muck_content_permission
+  end
+  CODE
+  
 end
 
 #====================
@@ -57,7 +102,31 @@ if install_muck_activity
   file_append 'Rakefile', <<-CODE
     require 'muck_activities/tasks'
   CODE
+  file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  # activity configuration
+  enable_live_activity_updates: true              # Turns on polling inside the user's activity feed so they constantly get updates from the site
+  live_activity_update_interval: 60               # Time between updates to live activity feed in seconds.  Setting this number to low can put quite a bit of strain on your site.
+  enable_activity_comments: true                  # Turn on comments inside the activity feed
+  CODE
+  
   rake('muck:activities:sync')
+end
+
+#====================
+# muck friends engine
+#====================
+if install_muck_friends
+  gem 'muck-friends', :lib => 'muck_friends'
+  file_append 'Rakefile', <<-CODE
+    require 'muck_friends/tasks'
+  CODE
+  file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  # Friend configuration
+  allow_following:  true                          # If true then users can 'follow' each other.  If false then only friend requests will be used.
+  enable_friend_activity: true                    # If true then friend related activity will show up in the activity feed.  Requires muck-activities gem
+  CODE
+
+  rake('muck:friends:sync')
 end
 
 #====================
@@ -81,6 +150,12 @@ if install_disguise
   CODE
   rake('disguise:setup')
   rake('db:migrate')
+  
+  file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  #theme configuration
+  use_domain_for_themes: false                    # Setting for the disguise plugin.  Themes can be set in the admin UI or determined at run time by the domain name.
+  CODE
+  
 end
 
 

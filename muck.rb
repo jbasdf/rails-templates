@@ -39,6 +39,7 @@ gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.git
 gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.0.5'
 gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
 gem "binarylogic-searchlogic", :lib => 'searchlogic', :source => 'http://gems.github.com', :version => '~> 2.0.0'
+gem 'friendly_id'
 gem 'muck-engine', :lib => 'muck_engine'
 gem 'muck-users', :lib => 'muck_users'
 
@@ -131,10 +132,11 @@ Rails::Initializer.run do |config|
 
   # Specify gems that this application depends on and have them installed with rake gems:install
   config.gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
-  config.gem "authlogic"
-  config.gem "binarylogic-searchlogic", :lib => 'searchlogic', :source  => 'http://gems.github.com', :version => '~> 2.0.0'
+  config.gem "binarylogic-authlogic", :lib => 'authlogic', :source  => 'http://gems.github.com', :version => ">=2.1.0"
+  config.gem "binarylogic-searchlogic", :lib => 'searchlogic', :source  => 'http://gems.github.com', :version => '~> 2.1.1'
   config.gem "bcrypt-ruby", :lib => "bcrypt", :version => ">=2.0.5"
   config.gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
+  config.gem "friendly_id", :version => '>=2.1.3'
   config.gem 'muck-engine', :lib => 'muck_engine'
   config.gem 'muck-users', :lib => 'muck_users'
 
@@ -156,6 +158,7 @@ Rails::Initializer.run do |config|
   # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
   # config.i18n.load_path += Dir[Rails.root.join('my', 'locales', '*.{rb,yml}')]
   # config.i18n.default_locale = :de
+  config.i18n.default_locale = :en
   
 end
 }
@@ -203,68 +206,83 @@ begin require 'redgreen'; rescue LoadError; end
 
 file 'config/global_config.yml',
 %Q{default: &DEFAULT
+  # All fields that need to be changed are marked with 'TODO'
+
+  application_name: #{app_name}
 
   # Sent in emails to users
-  application_name: '#{app_name}'
-  from_email: 'support@#{domain_name}'
-  support_email: 'support@#{domain_name}'
-  admin_email: 'admin@#{domain_name}'
+  from_email: 'support@TODO.com'           # Emails will come from this address i.e. noreply@example.com, support@example.com, system@example.com, etc
+  from_email_name: 'TODO Name'             # This will show up as the name on emails.  i.e. support@example.com <Example> 
+  support_email: 'support@TODO.com'        # Support email for your application.  This is used for contact us etc.
+  admin_email: 'admin@example.com'         # Admin email for your application
   customer_service_number: '1-800-'
-  
+
   # Email charset
   mail_charset: 'utf-8'
 
-  automatically_activate: true
-  automatically_login_after_account_create: true
+  # Email server configuration
+  # These settings are used in smtp_gmail.rb.  You can sign up for a free Google Apps account here: http://www.google.com/apps/intl/en/group/index.html
+  # If you wish to use a different email server change the settings in smtp_gmail.rb
+  email_user_name: 'system@TODO.com'      # Username to sign into a gmail account
+  email_password: 'TODO_secret_password'  # Password for your gmail account
+  base_domain: #{domain_name}             # Domain name for your application without any subdomain or other settings.
+
+  # sign up options
+  automatically_activate: true                    # Automatically activate a user after signup.  If this is false the user will need to click on a link or answer a captcha to activate their account.
+  automatically_login_after_account_create: true  # Automatically log the user into the site after sign up.  Works if automatically_activate is true or if you use a captcha.
   send_welcome: true
 
   # if you use recaptcha you will need to also provide a public and private
   # key available from http://recaptcha.net.
-  use_recaptcha: true
+  use_recaptcha: false                            # Captcha is a popular way to keep bots out of your site.  Get a key at http://recaptcha.net before turning use_recaptcha to true.
   recaptcha_pub_key: GET_A_RECAPTCHA_KEY(TODO)
   recaptcha_priv_key: GET_A_RECAPTCHA_KEY(TODO)
-  
-  # jgrowl related settings
-  growl_enabled: true
-  growl_flash_messages: false
-  growl_ar_errors: false
-  
-  # application configuration
-  let_users_delete_their_account: false  # turn on/off ability for users to delete their own account
-  enable_live_activity_updates: true # Turns on polling inside the user's activity feed so they constantly get updates from the site
 
+  # jgrowl related settings
+  growl_enabled: false                            # Use jgrowl messages instead of inline messages.  This will popup flash and error messages using jgrowl
+
+  # application configuration
+  let_users_delete_their_account: false           # turn on/off ability for users to delete their own account
+
+  # ssl
+  enable_ssl: false                               # Turn on ssl if you have a certificate in place
+
+  # keys
+  hoptoad_key: 'TODO get a hoptoad key'           # Get a Hoptoad key here: http://hoptoadapp.com/welcome
+
+  # Google analtyics configuration
+  google_tracking_code: ""
+  google_tracking_set_domain: ""
   
 production:
   <<: *DEFAULT
 
   # Sent in emails to users
-  application_url: 'www.#{domain_name}'
-
-  # Source address for user emails
-  email_from: 'support@#{domain_name}'
+  application_url: 'www.example.com'              # Application url
 
 staging:
   <<: *DEFAULT
 
   # Sent in emails to users
-  application_url: 'staging.#{domain_name}'
-    
+  application_url: 'staging.example.com'
+
 development:
   <<: *DEFAULT
 
   application_url: 'localhost:3000'
-  
+
 test:
   <<: *DEFAULT
 
   # controls account activation and automatic login
   automatically_activate: false
   automatically_login_after_account_create: false
-  
+
   # turn off for testing
   use_recaptcha: false
-  
+
   application_url: 'localhost:3000'
+
 }
 
 file 'app/controllers/application_controller.rb',
@@ -281,6 +299,12 @@ file 'app/controllers/application_controller.rb',
   before_filter :set_body_class
   
   protected
+  
+  # called by Admin::Muck::BaseController to check whether or not the
+  # user should have access to the admin UI
+  def admin_access?
+    access_denied unless admin?
+  end
   
   # only require ssl if we are in production
   def ssl_required?
@@ -710,8 +734,13 @@ end
 #==================== 
 # Muck sync tasks
 #==================== 
-rake('muck:base:sync')
+rake('muck:engine:sync')
 rake('muck:users:sync')
+
+#==================== 
+# General Setup
+#==================== 
+run "script/generate friendly_id"
 
 #==================== 
 # Setup database

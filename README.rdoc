@@ -17,6 +17,4 @@ If you build your own layout be sure to include the following script in your lay
   </script>
 
 
-
-
 Copyright (c) 2009 Justin Ball, released under the MIT license
