@@ -15,7 +15,6 @@ def file_inject(file_name, sentinel, string, before_after=:after)
 end
 
 install_muck_content = true if yes?('Install content system? (y/n)')
-install_muck_activity = true if yes?('Install activity system? (y/n)')
 install_muck_profiles = true if yes?('Install profile system? (y/n)') || install_muck_activity
 install_muck_friends = true if yes?('Install friends system? (y/n)')
 install_file_uploads = true if yes?('Install file uploads? (y/n)')
@@ -23,6 +22,8 @@ install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
 install_solr = true if yes?('Install Acts As Solr? (y/n)') || install_muck_content
 install_disguise = true if yes?('Install disguise theme engine? (y/n)')
 install_muck_comments = true if yes?('Install muck comment engine?  This is required for the muck activity engine. (y/n)') || install_muck_activity
+install_muck_shares = true if yes?('Install muck shares? (y/n)')
+install_muck_activity = true if yes?('Install activity system? (y/n)') || install_muck_shares
 install_tagging = true if yes?('Install Tagging? (y/n)') || install_muck_content
 
 #====================
@@ -30,6 +31,10 @@ install_tagging = true if yes?('Install Tagging? (y/n)') || install_muck_content
 #====================
 if install_solr
   gem 'muck-solr', :lib => 'acts_as_solr'
+  # TODO add code to install solr config files
+  # TODO muck-solr requires muck_raker.rb to be installed in initializers.
+  # that file should probably be setup by a rake task in muck-solr and be
+  # called muck_solr.rb NOT muck_raker.rb 
 end
 
 #====================
@@ -39,26 +44,23 @@ if install_muck_content
   gem 'muck-contents', :lib => 'muck_contents'
   
   file_append 'Rakefile', <<-CODE
-    require 'muck_contents/tasks'
+  require 'muck_contents/tasks'
   CODE
-  rake('rake muck:contents:sync')
+  
+  file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  git_repository: ''
+  enable_auto_translations: false
+  enable_solr: #{install_solr ? 'true' : 'false'}
+  CODE
   
   file 'app/models/content.rb', <<-CODE
-    class Content < ActiveRecord::Base
-      acts_as_muck_content(
-        :git_repository => GlobalConfig.content_git_repository,
-        :enable_auto_translations => GlobalConfig.enable_auto_translations,
-        :enable_solr => GlobalConfig.content_enable_solr
-      )
-  
-      # Add search to your content.  Be sure to install muck-solr or another acts_as_solr.  This is left
-      # for the model so that you can choose what kind of search to implement
-      acts_as_solr :fields => [ :search_content ]
-      def search_content
-        "\#{title} \#{body} \#{tags.collect{|t| t.name}.join(' ')}"
-      end
-    
-    end
+  class Content < ActiveRecord::Base
+    acts_as_muck_content(
+      :git_repository => GlobalConfig.content_git_repository,
+      :enable_auto_translations => GlobalConfig.enable_auto_translations,
+      :enable_solr => GlobalConfig.content_enable_solr
+    )
+  end
   CODE
   
   file 'app/models/content_translation.rb', <<-CODE
@@ -73,8 +75,41 @@ if install_muck_content
   end
   CODE
   
+  file 'app/controllers/contents_controller.rb', <<-CODE
+  class ContentsController < Muck::ContentsController
+  end
+  CODE
+  
+  file_inject 'config/routes.rb', "ActionController::Routing::Routes.draw do |map|", <<-CODE
+  map.resources :contents
+  CODE
+  
   rake('muck:contents:sync')
   
+end
+
+#====================
+# muck shares
+#====================
+if install_muck_shares
+  gem 'muck-shares', :lib => 'muck_shares'
+  
+  file 'app/models/share.rb', <<-CODE
+  class Share < ActiveRecord::Base
+    acts_as_muck_share
+  end
+  CODE
+  
+  file_inject 'app/models/user.rb', "class User < ActiveRecord::Base" <<-CODE
+    acts_as_muck_sharer
+  CODE
+  
+  file_append 'Rakefile', <<-CODE
+  require 'muck_shares/tasks'
+  CODE
+  
+  rake('muck:shares:sync')
+
 end
 
 #====================
@@ -84,7 +119,7 @@ if install_muck_profiles
   gem 'muck-profiles', :lib => 'muck_profiles'
   
   file_append 'Rakefile', <<-CODE
-    require 'muck_profiles/tasks'
+  require 'muck_profiles/tasks'
   CODE
   rake('muck:profiles:sync')
   
@@ -102,7 +137,7 @@ end
 if install_muck_activity
   gem 'muck-activities', :lib => 'muck_activities'
   file_append 'Rakefile', <<-CODE
-    require 'muck_activities/tasks'
+  require 'muck_activities/tasks'
   CODE
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
   # activity configuration
@@ -120,12 +155,20 @@ end
 if install_muck_friends
   gem 'muck-friends', :lib => 'muck_friends'
   file_append 'Rakefile', <<-CODE
-    require 'muck_friends/tasks'
+  require 'muck_friends/tasks'
   CODE
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
   # Friend configuration
-  allow_following:  true                          # If true then users can 'follow' each other.  If false then only friend requests will be used.
-  enable_friend_activity: true                    # If true then friend related activity will show up in the activity feed.  Requires muck-activities gem
+  # Muck Friends provides a hybrid friend/follow model.  Either mode can be turned off or both can be enabled
+  # If only following is enabled then users will be provided the ability to follow, unfollow, and block
+  # If only friending is enabled then users will be provided a 'friend request' link and the ability to accept friend requests
+  # If both modes are are enabled then users will be able to follow other users.  A mutual follow results in 'friends'.  An unfollow 
+  # leaves the other party as just a follower.
+  # Note that at least one mode must be enabled or imagine all life as you know it stopping instantaneously and every molecule in your body exploding at the speed of light. 
+  enable_friending: true        # If true then friending is enabled.
+  enable_following: true        # If true then users can 'follow' each other.  If false then only friend requests will be used.
+  enable_friend_activity: true  # If true then friend related activity will show up in the activity feed.  Requires muck-activities gem
+  
   CODE
 
   rake('muck:friends:sync')
@@ -137,8 +180,8 @@ end
 if install_cms_lite
   gem 'cms-lite', :lib => 'cms_lite'
   file_append 'Rakefile', <<-CODE
-    require 'cms_lite'
-    require 'cms_lite/tasks'
+  require 'cms_lite'
+  require 'cms_lite/tasks'
   CODE
 end
 
@@ -148,10 +191,9 @@ end
 if install_disguise
   gem 'disguise'
   file_append 'Rakefile', <<-CODE
-    require 'disguise/tasks'
+  require 'disguise/tasks'
   CODE
   rake('disguise:setup')
-  rake('db:migrate')
   
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
   #theme configuration
@@ -165,10 +207,12 @@ end
 # uploader
 #====================
 if install_file_uploads
+  
   gem 'uploader'
+  
   file_append 'Rakefile', <<-CODE
-    require 'uploader'
-    require 'uploader/tasks'
+  require 'uploader'
+  require 'uploader/tasks'
   CODE
   
   initializer 's3_credentials.rb', <<-CODE
@@ -200,8 +244,8 @@ if install_file_uploads
                         :default_url => "/images/profile_default.jpg",
                         :storage => :s3,
                         :s3_credentials => AMAZON_S3_CREDENTIALS,
-                        :bucket => "assets.#{GlobalConfig.application_url}",
-                        :s3_host_alias => "assets.#{GlobalConfig.application_url}",
+                        :bucket => "assets.\#{GlobalConfig.application_url}",
+                        :s3_host_alias => "assets.\#{GlobalConfig.application_url}",
                         :convert_options => {
                            :all => '-quality 80'
                          }
@@ -282,3 +326,8 @@ if install_tagging
   file_inject('app/models/user.rb', 'class User < ActiveRecord::Base', 'acts_as_tagger')
   run "script/generate acts_as_taggable_on_migration"
 end
+
+#====================
+# Run any needed migrations
+#====================
+rake('db:migrate')

@@ -18,7 +18,7 @@ end
 # /////////////////////////////////////////////
 # Modify test.rb to include testing gems
 #
-file_append 'config/environments/test.rb', <<-CODE
+test_rb = <<-CODE
 config.gem 'mocha', :version => '>= 0.9.5'
 config.gem 'thoughtbot-factory_girl', :lib => 'factory_girl', :source => 'http://gems.github.com'
 config.gem 'thoughtbot-shoulda', :lib => 'shoulda', :source => 'http://gems.github.com'
@@ -29,12 +29,18 @@ config.gem 'term-ansicolor', :version => '>=1.0.3', :lib => 'term/ansicolor'
 config.gem 'cucumber', :version => '>=0.1.13', :lib => 'cucumber'
 config.gem 'polyglot', :version => '>=0.2.4'
 config.gem "rcov", :version => '>=0.8.1.2.0'
-config.gem "webrat", :version => '>=0.4.2'
+config.gem "webrat", :version => '>=0.4.4'
+
+# only required if you want to use selenium for testing
+#config.gem 'selenium-client', :lib => 'selenium/client'
+#config.gem 'bmabey-database_cleaner', :lib => 'database_cleaner', :source => 'http://gems.github.com'
 
 require 'factory_girl'
 require 'mocha'
 begin require 'redgreen'; rescue LoadError; end
 CODE
+
+file_append 'config/environments/test.rb', test_rb
 
 # /////////////////////////////////////////////
 # Create test_helper.rb
@@ -78,6 +84,12 @@ class ActiveSupport::TestCase
   def ensure_flash(val)
     assert_contains flash.values, val, ", Flash: \#{flash.inspect}"
   end
+  
+  # For Selenium
+  # setup do |session|
+  #   session.host! "localhost:3001"
+  # end
+    
 end
 
 # turn off solr for tests
@@ -280,7 +292,11 @@ module MuckControllerMacros
     login_url = args.delete :login_url
     args.each do |action, verb|
       should "Require login for '\#{action}' action" do
-        send(verb, action)
+        if [:put, :delete].include?(verb) # put and delete require an id even if it is a bogus one
+          send(verb, action, :id => 1)
+        else
+          send(verb, action)
+        end
         assert_redirected_to(login_url)
       end
     end
@@ -322,6 +338,16 @@ CODE
 
 
 # /////////////////////////////////////////////
+# Test Definitions
+#
+file 'test/test_definitions.rb',
+%q{module TestDefinitions
+  NOT_LOGGED_IN_MSG = /You must be logged in to access this feature/i
+  PERMISSION_DENIED_MSG = /You don't have permission to do that/i
+end
+}
+
+# /////////////////////////////////////////////
 # Create factories
 #
 file 'test/factories.rb', <<-CODE
@@ -343,6 +369,10 @@ end
 
 Factory.sequence :description do |n|
   "This is the description: \#{n}"
+end
+
+Factory.sequence :uri do |n|
+  "n\#{n}.example.com"
 end
 
 Factory.define :state do |f|
@@ -392,6 +422,9 @@ Factory.define :domain_theme do |f|
   f.uri { Factory.next(:uri) }
 end
 
+Factory.define :theme do |f|
+  f.name { Factory.next(:name) }
+end
 
 Factory.define :feed do |f|
   f.contributor { |a| a.association(:user) }
@@ -482,6 +515,11 @@ ENV["RAILS_ENV"] = "test"
 require File.expand_path(File.dirname(__FILE__) + '/../../config/environment')
 require 'cucumber/rails/world'
 require 'cucumber/formatters/unicode' # Comment out this line if you don't want Cucumber Unicode support
+
+require 'database_cleaner'
+require 'database_cleaner/cucumber'
+DatabaseCleaner.strategy = :truncation
+
 Cucumber::Rails.use_transactional_fixtures
 
 require 'webrat/rails'
@@ -493,6 +531,26 @@ require 'webrat/rspec-rails'
 Webrat.configure do |config|
   config.mode = :rails
 end
+
+# Webrat.configure do |config|  
+#   config.mode = :selenium  
+#   config.application_environment = :test  
+#   config.application_framework = :rails  
+# end
+
+# To enable selenium:
+# 1. sudo gem install selenium-client
+# 2. uncomment Webrat.configure that contains :selenium and then comment out the one that contains :rails above
+# 3. set:  self.use_transactional_fixtures = false in test_helper.rb
+# 4. uncomment in test_helper.rb:
+      # setup do |session|
+      #   session.host! "localhost:3001"
+      # end
+# 5. Be sure to apply the patch mentioned in the viget article below found here: http://gist.github.com/141590
+      
+# References:
+# http://www.brynary.com/2009/4/6/switching-webrat-to-selenium-mode
+# http://www.viget.com/extend/getting-started-with-webrat-selenium-rails-and-firefox-3/
 CODE
 
 
