@@ -494,8 +494,8 @@ rake('muck:users:sync')
 #==================== 
 run "script/generate friendly_id"
 
-timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S") # HACK stole this from rails migration script
-file "db/migrate/#{timestamp}_initial_migration.rb", 
+timestamp = (Time.now + 5.seconds).utc.strftime("%Y%m%d%H%M%S") # HACK stole this from rails migration script
+file "db/migrate/#{timestamp}_add_scope_index_to_slugs.rb", 
 %q{class AddScopeIndexToSlugs < ActiveRecord::Migration
   def self.up
     add_index :slugs, :scope
