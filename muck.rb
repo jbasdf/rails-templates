@@ -46,9 +46,9 @@ plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attribut
 # gems 
 #====================
 gem "binarylogic-authlogic", :lib => 'authlogic', :source  => 'http://gems.github.com', :version => ">=2.1.1"
-gem "binarylogic-searchlogic", :lib => 'searchlogic', :source  => 'http://gems.github.com', :version => '>=2.1.8'
+gem "binarylogic-searchlogic", :lib => 'searchlogic', :source  => 'http://gems.github.com', :version => '>=2.3.1'
 gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.github.com'
-gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.0.5'
+gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.1.1'
 gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
 gem 'friendly_id'
 gem "openrain-action_mailer_tls", :lib => 'smtp_tls', :source => "http://gems.github.com" # This is only require for installations that have ruby 1.8.6.  If you are running Ruby 1.8.7 you may comment this out and remove require "smtp_tls" from smtp_gmail.rb
@@ -305,7 +305,7 @@ initializer 'caching.rb',
 
 initializer 'hoptoad.rb',
 %Q{HoptoadNotifier.configure do |config|
-  config.api_key = 'GET A HOPTOAD KEY(TODO)'
+  config.api_key = GlobalConfig.hoptoad_key
 end  
 }
 
@@ -493,6 +493,18 @@ rake('muck:users:sync')
 # General Setup
 #==================== 
 run "script/generate friendly_id"
+
+timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S") # HACK stole this from rails migration script
+file "db/migrate/#{timestamp}_initial_migration.rb", 
+%q{class AddScopeIndexToSlugs < ActiveRecord::Migration
+  def self.up
+    add_index :slugs, :scope
+  end
+  def self.down
+    remove_index :slugs, :scope
+  end
+end
+}
 
 #==================== 
 # Setup database
