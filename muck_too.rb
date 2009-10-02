@@ -14,17 +14,27 @@ def file_inject(file_name, sentinel, string, before_after=:after)
   end
 end
 
-install_muck_content = true if yes?('Install content system? (y/n)')
-install_muck_profiles = true if yes?('Install profile system? (y/n)') || install_muck_activity
-install_muck_friends = true if yes?('Install friends system? (y/n)')
+install_muck_blogs = true if yes?('Install blog system? (Muck Blogs) (y/n)')
+install_muck_content = true if yes?('Install content system (Muck Content)? (y/n)') || install_muck_blogs
+install_muck_profiles = true if yes?('Install profile system (Muck Profiles)? (y/n)') || install_muck_activity
+install_muck_raker = true if yes?('Muck Raker? (y/n)')
+install_muck_friends = true if yes?('Install friends system (Muck Friends)? (y/n)')
 install_file_uploads = true if yes?('Install file uploads? (y/n)')
 install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
-install_solr = true if yes?('Install Acts As Solr? (y/n)') || install_muck_content
+install_solr = true if yes?('Install Acts As Solr (Muck Solr)? (y/n)') || install_muck_content
 install_disguise = true if yes?('Install disguise theme engine? (y/n)')
-install_muck_comments = true if yes?('Install muck comment engine?  This is required for the muck activity engine. (y/n)') || install_muck_activity
-install_muck_shares = true if yes?('Install muck shares? (y/n)')
-install_muck_activity = true if yes?('Install activity system? (y/n)') || install_muck_shares
+install_muck_comments = true if yes?('Install comment engine (Muck Comments)?  This is required for the muck activity engine. (y/n)') || install_muck_activity || install_muck_blogs || install_muck_raker
+install_muck_shares = true if yes?('Install muck shares (Muck Shares)? (y/n)') || install_muck_raker
+install_muck_activity = true if yes?('Install activity system (Muck Activities)? (y/n)') || install_muck_shares
 install_tagging = true if yes?('Install Tagging? (y/n)') || install_muck_content
+install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)') || install_muck_content
+
+#====================
+# babelphish
+#====================
+if install_babelphish
+  gem 'babelphish'
+end
 
 #====================
 # muck solr
@@ -38,6 +48,49 @@ if install_solr
 end
 
 #====================
+# muck raker
+#====================
+if install_muck_raker
+  gem 'muck-raker', :lib => 'muck_raker'
+  gem "muck-feedbag", :lib => "feedbag", :source => "http://gems.github.com"
+  gem "pauldix-feedzirra", :lib => 'feedzirra', :source => "http://gems.github.com"
+  
+  file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  # Muck raker options
+  inform_admin_of_global_feed: true
+  enable_raker_comments: true
+  enable_raker_shares: true
+  # Get these values from your Amazon account.  They are required if you wish to access any of Amazon's APIs
+  amazon_secret_access_key: ''
+  amazon_access_key_id: ''
+  amazon_associate_tag: ''
+  # Google ajax api key is optional but recommended by google.  Get one here: http://code.google.com/apis/ajaxsearch/signup.html
+  google_ajax_api_key: ''
+  CODE
+  
+  file_append 'Rakefile', <<-CODE
+  require 'muck_raker/tasks'
+  CODE
+end
+
+#====================
+# muck blogs
+#====================
+if install_muck_blogs
+  gem 'muck-blogs', :lib => 'muck_blogs'
+  
+  file_append 'Rakefile', <<-CODE
+  require 'muck_blogs/tasks'
+  CODE
+  
+  file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  # Blogs
+  enable_post_activities: true # Determine whether or not an activity will be added after a user contributes a post.  Requires muck-activities
+  CODE
+  
+end
+
+#====================
 # muck content engine
 #====================
 if install_muck_content
@@ -48,9 +101,11 @@ if install_muck_content
   CODE
   
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
-  git_repository: ''
-  enable_auto_translations: false
-  enable_solr: #{install_solr ? 'true' : 'false'}
+  # Content - see muck-contents readme for more information
+  enable_auto_translations: false # If enabled all content will be translated into all available languages on each save.  Requires babelphish gem
+  content_enable_solr: #{install_solr ? 'true' : 'false'} # requires that solr be installed
+  content_git_repository: false # use a backend git repository for source control
+  git_repository: '' # path to git repository to use for content version control
   CODE
   
   file 'app/models/content.rb', <<-CODE
@@ -148,6 +203,9 @@ if install_muck_activity
   enable_live_activity_updates: true              # Turns on polling inside the user's activity feed so they constantly get updates from the site
   live_activity_update_interval: 60               # Time between updates to live activity feed in seconds.  Setting this number to low can put quite a bit of strain on your site.
   enable_activity_comments: true                  # Turn on comments inside the activity feed
+  enable_activity_file_uploads: true # Turn on file uploads in the activity feed.  Requires that uploader be installed.
+  enable_activity_image_uploads: true # Turn on image uploads in the activity feed.  Requires that uploader and muck_albums be installed.
+  enable_activity_video_sharing: true # Turn on video sharing in the activity feed.
   CODE
   
   rake('muck:activities:sync')
@@ -158,9 +216,11 @@ end
 #====================
 if install_muck_friends
   gem 'muck-friends', :lib => 'muck_friends'
+  
   file_append 'Rakefile', <<-CODE
   require 'muck_friends/tasks'
   CODE
+  
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
   # Friend configuration
   # Muck Friends provides a hybrid friend/follow model.  Either mode can be turned off or both can be enabled
