@@ -84,6 +84,10 @@ if install_muck_content
   map.resources :contents
   CODE
   
+  file_inject 'controllers/application_controller.rb', "class ApplicationController < ActionController::Base", <<-CODE
+  acts_as_muck_content_handler
+  CODE
+  
   rake('muck:contents:sync')
   
 end
