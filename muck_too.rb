@@ -1,9 +1,11 @@
+require 'ruby-debug'
+
 def file_append(file, data)
   log 'file_append', file
   append_file(file, data)
 end
 
-def file_inject(file_name, sentinel, string, before_after=:after)
+def file_inject(file_name, sentinel, string, before_after = :after)
   log 'file_inject', file_name
   gsub_file file_name, /(#{Regexp.escape(sentinel)})/mi do |match|
     if :after == before_after
@@ -14,32 +16,35 @@ def file_inject(file_name, sentinel, string, before_after=:after)
   end
 end
 
-install_muck_blogs = true if yes?('Install blog system? (Muck Blogs) (y/n)')
-install_muck_content = true if yes?('Install content system (Muck Content)? (y/n)') || install_muck_blogs
-install_muck_profiles = true if yes?('Install profile system (Muck Profiles)? (y/n)') || install_muck_activity
-install_muck_raker = true if yes?('Muck Raker? (y/n)')
-install_muck_friends = true if yes?('Install friends system (Muck Friends)? (y/n)')
-install_file_uploads = true if yes?('Install file uploads? (y/n)')
-install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
-install_solr = true if yes?('Install Acts As Solr (Muck Solr)? (y/n)') || install_muck_content
-install_disguise = true if yes?('Install disguise theme engine? (y/n)')
-install_muck_comments = true if yes?('Install comment engine (Muck Comments)?  This is required for the muck activity engine. (y/n)') || install_muck_activity || install_muck_blogs || install_muck_raker
-install_muck_shares = true if yes?('Install muck shares (Muck Shares)? (y/n)') || install_muck_raker
-install_muck_activity = true if yes?('Install activity system (Muck Activities)? (y/n)') || install_muck_shares
-install_tagging = true if yes?('Install Tagging? (y/n)') || install_muck_content
-install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)') || install_muck_content
+install_everything = true if yes?('Install everything? (y/n)')
+if !install_everything
+  install_muck_blogs = true if yes?('Install blog system? (Muck Blogs) (y/n)')
+  install_muck_content = true if yes?('Install content system (Muck Content)? (y/n)') || install_muck_blogs
+  install_muck_profiles = true if yes?('Install profile system (Muck Profiles)? (y/n)') || install_muck_activity
+  install_muck_raker = true if yes?('Muck Raker? (y/n)')
+  install_muck_friends = true if yes?('Install friends system (Muck Friends)? (y/n)')
+  install_file_uploads = true if yes?('Install file uploads? (y/n)')
+  install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
+  install_solr = true if yes?('Install Acts As Solr (Muck Solr)? (y/n)') || install_muck_content
+  install_disguise = true if yes?('Install disguise theme engine? (y/n)')
+  install_muck_comments = true if yes?('Install comment engine (Muck Comments)?  This is required for the muck activity engine. (y/n)') || install_muck_activity || install_muck_blogs || install_muck_raker
+  install_muck_shares = true if yes?('Install muck shares (Muck Shares)? (y/n)') || install_muck_raker
+  install_muck_activity = true if yes?('Install activity system (Muck Activities)? (y/n)') || install_muck_shares
+  install_tagging = true if yes?('Install Tagging? (y/n)') || install_muck_content
+  install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)') || install_muck_content
+end
 
 #====================
 # babelphish
 #====================
-if install_babelphish
+if install_babelphish || install_everything
   gem 'babelphish'
 end
 
 #====================
 # muck solr
 #====================
-if install_solr
+if install_solr || install_everything
   gem 'muck-solr', :lib => 'acts_as_solr'
   # TODO add code to install solr config files
   # TODO muck-solr requires muck_raker.rb to be installed in initializers.
@@ -50,7 +55,7 @@ end
 #====================
 # muck raker
 #====================
-if install_muck_raker
+if install_muck_raker || install_everything
   gem 'muck-raker', :lib => 'muck_raker'
   gem "muck-feedbag", :lib => "feedbag", :source => "http://gems.github.com"
   gem "pauldix-feedzirra", :lib => 'feedzirra', :source => "http://gems.github.com"
@@ -71,29 +76,39 @@ if install_muck_raker
   file_append 'Rakefile', <<-CODE
   require 'muck_raker/tasks'
   CODE
+  
+  rake('muck:raker:sync')
 end
 
 #====================
 # muck blogs
 #====================
-if install_muck_blogs
+if install_muck_blogs || install_everything
   gem 'muck-blogs', :lib => 'muck_blogs'
   
   file_append 'Rakefile', <<-CODE
   require 'muck_blogs/tasks'
   CODE
   
+  rake('muck:blogs:sync')
+  
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
   # Blogs
   enable_post_activities: true # Determine whether or not an activity will be added after a user contributes a post.  Requires muck-activities
   CODE
-  
+
+  file 'app/models/blog.rb', <<-CODE
+  class Blog < ActiveRecord::Base
+    acts_as_muck_blog
+  end
+  CODE
+
 end
 
 #====================
 # muck content engine
 #====================
-if install_muck_content
+if install_muck_content || install_everything
   gem 'muck-contents', :lib => 'muck_contents'
   
   file_append 'Rakefile', <<-CODE
@@ -139,7 +154,7 @@ if install_muck_content
   map.resources :contents
   CODE
   
-  file_inject 'controllers/application_controller.rb', "class ApplicationController < ActionController::Base", <<-CODE
+  file_inject 'app/controllers/application_controller.rb', "class ApplicationController < ActionController::Base", <<-CODE
   acts_as_muck_content_handler
   CODE
   
@@ -150,7 +165,7 @@ end
 #====================
 # muck shares
 #====================
-if install_muck_shares
+if install_muck_shares || install_everything
   gem 'muck-shares', :lib => 'muck_shares'
   
   file 'app/models/share.rb', <<-CODE
@@ -159,27 +174,27 @@ if install_muck_shares
   end
   CODE
   
-  file_inject 'app/models/user.rb', "class User < ActiveRecord::Base" <<-CODE
-    acts_as_muck_sharer
+  file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
+  acts_as_muck_sharer
   CODE
   
   file_append 'Rakefile', <<-CODE
   require 'muck_shares/tasks'
   CODE
-  
-  rake('muck:shares:sync')
 
+  rake('muck:shares:sync')
 end
 
 #====================
 # muck profile engine
 #====================
-if install_muck_profiles
+if install_muck_profiles || install_everything
   gem 'muck-profiles', :lib => 'muck_profiles'
   
   file_append 'Rakefile', <<-CODE
   require 'muck_profiles/tasks'
   CODE
+  
   rake('muck:profiles:sync')
   
   file 'app/models/profile.rb', <<-CODE
@@ -193,7 +208,7 @@ end
 #====================
 # muck activity engine
 #====================
-if install_muck_activity
+if install_muck_activity || install_everything
   gem 'muck-activities', :lib => 'muck_activities'
   file_append 'Rakefile', <<-CODE
   require 'muck_activities/tasks'
@@ -214,7 +229,7 @@ end
 #====================
 # muck friends engine
 #====================
-if install_muck_friends
+if install_muck_friends || install_everything
   gem 'muck-friends', :lib => 'muck_friends'
   
   file_append 'Rakefile', <<-CODE
@@ -241,7 +256,7 @@ end
 #====================
 # cms lite
 #====================
-if install_cms_lite
+if install_cms_lite || install_everything
   gem 'cms-lite', :lib => 'cms_lite'
   file_append 'Rakefile', <<-CODE
   require 'cms_lite'
@@ -252,7 +267,7 @@ end
 #====================
 # disguise
 #====================
-if install_disguise
+if install_disguise || install_everything
   gem 'disguise'
   file_append 'Rakefile', <<-CODE
   require 'disguise/tasks'
@@ -270,7 +285,7 @@ end
 #====================
 # uploader
 #====================
-if install_file_uploads
+if install_file_uploads || install_everything
   
   gem 'uploader'
   
@@ -326,7 +341,7 @@ end
 #====================
 # muck comments
 #====================
-if install_muck_comments
+if install_muck_comments || install_everything
 
   # nested set is required for comments
   gem "collectiveidea-awesome_nested_set", :lib => 'awesome_nested_set'
@@ -384,7 +399,7 @@ end
 #====================
 # tagging
 #====================
-if install_tagging
+if install_tagging || install_everything
   gem 'mbleigh-acts-as-taggable-on', :source => "http://gems.github.com", :lib => "acts-as-taggable-on"
   file_inject('app/helpers/application_helper.rb', 'module ApplicationHelper', 'include TagsHelper')
   file_inject('app/models/user.rb', 'class User < ActiveRecord::Base', 'acts_as_tagger')
@@ -395,3 +410,15 @@ end
 # Run any needed migrations
 #====================
 rake('db:migrate')
+
+#====================
+# muck raker default data
+#====================
+if install_muck_raker || install_everything
+  rake("muck:raker:db:populate")
+end
+
+puts "================================================================================"
+puts "SUCCESS!"
+puts "================================================================================"
+

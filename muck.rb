@@ -486,12 +486,6 @@ end
 }
 
 #==================== 
-# Muck sync tasks
-#==================== 
-rake('muck:engine:sync')
-rake('muck:users:sync')
-
-#==================== 
 # General Setup
 #==================== 
 run "script/generate friendly_id"
@@ -507,6 +501,14 @@ file "db/migrate/#{timestamp}_add_scope_index_to_slugs.rb",
   end
 end
 }
+
+# Note this is located between the friendly_id migration generation and the db:session:create because occasionally the 
+# script would run fast enough that the migrations would end up with the same timestamp.
+#==================== 
+# Muck sync tasks
+#==================== 
+rake('muck:engine:sync')
+rake('muck:users:sync')
 
 #==================== 
 # Setup database
@@ -581,8 +583,15 @@ git :commit => "-a -m 'Initial commit'"
 # end
  
 # Success!
+
 puts "================================================================================"
 puts "SUCCESS!"
 puts "Search for 'TODO' to find specific items that need to be configured"
-puts "Run 'rake muck:users:create_admin' to create a default admin user with the password 'asdfasdf'"
+puts "Next steps:"
+puts "1. Install other muck functionality:"
+puts "   Run rake rails:template LOCATION=http://github.com/jbasdf/rails-templates/raw/master/muck_too.rb"
+puts "2. Install tests:"
+puts "   rake rails:template LOCATION=http://github.com/jbasdf/rails-templates/raw/master/muck_test.rb"
+puts "3. Add default data"
+puts "   rake muck:users:create_admin # to create a default admin user with the password 'asdfasdf'"
 puts "================================================================================"
