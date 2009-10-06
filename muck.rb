@@ -204,60 +204,94 @@ end
 
 file 'app/views/layouts/default.html.erb',
 %q{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-  <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-  	<head>
-  		<title><%= @page_title || GlobalConfig.application_name %></title>
-  		<meta http-equiv="content-type" content="text/xhtml; charset=utf-8" />
-  		<meta http-equiv="imagetoolbar" content="no" />
-  		<meta name="distribution" content="all" />
-  		<meta name="robots" content="all" />	
-  		<meta name="resource-type" content="document" />
-  		<meta name="MSSmartTagsPreventParsing" content="true" />
-      <%= stylesheet_link_tag %w{
-            reset
-            blueprint/screen
-            styles
-          }, :cache => true %>
-      <%= stylesheet_link_tag 'blueprint/print.css', :media => "print" %>
-      <!--[if IE]><%= stylesheet_link_tag "blueprint/ie.css", :media => "screen, projection" %><![endif]-->
-      <%= javascript_include_tag %w{
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <%= render :partial => 'layouts/global/head' %>
+</head>
+<body>
+  <div id="wrapper" class="container">
+    <%= render :partial => 'layouts/global/header' %>
+    <div id="content-wrapper">
+      <div id="content">
+        <%= yield :layout %>
+      </div>
+    </div>
+    <%= render :partial => 'layouts/global/footer' %>
+  </div>
+  <script type="text/javascript" language="JavaScript">
+  <%= yield :javascript %>
+  </script>
+  <%= render :partial => 'layouts/global/google_analytics' %>
+</body>
+</html>}
+
+file 'app/views/layouts/global/_head.html.erb',
+%q{<title><%= @page_title || GlobalConfig.application_name %></title>
+<meta http-equiv="content-type" content="text/xhtml; charset=utf-8" />
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="distribution" content="all" />
+<meta name="robots" content="all" />
+<meta name="resource-type" content="document" />
+<meta name="MSSmartTagsPreventParsing" content="true" />
+<%= stylesheet_link_tag 'blueprint/print.css', :media => "print" %>
+<!--[if IE]><link rel="stylesheet" href="/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+<%= stylesheet_link_tag %W{ reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame }, :cache => true %>
+<%= stylesheet_link_tag 'default' %>
+<%= javascript_include_tag %w{
             jquery/jquery.js
             jquery/jquery-ui.js
             jquery/jrails.js
             jquery/jquery.jgrowl.js
             jquery/jquery.tips.js
-            application.js
-          }, :cache => 'all_js_cached' %>
-      <%= javascript_tag %[const AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
-      <%= yield :head -%>
-  	</head>
-  	<body>
-  	  <div id="wrapper">
-  	    <div id="header">
+            jquery/jquery.easing.js
+            jquery/jquery.fancybox.js
+            muck.js
+            application.js }, :cache => 'all_js_cached' %>
+<%= javascript_tag %[var AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
+<%= yield :head -%>
+<link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+<link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico">}
 
-        </div>
-        <div id="content-wrapper">
-          <div id="content">
-  		      <%= yield :layout %>
-  		    </div>
-  		  </div>
-  		</div>
-  		<script type="text/javascript" language="JavaScript">
-      jQuery(document).ready(function(){
-        <%= yield :ready %>
-      });
-      </script>  
-  	</body>
-  </html>
+file 'app/views/layouts/global/_header.html.erb',
+%q{<div class="block" id="header">
+    <a href="/"><div id="logo" class="span-8 column">&nbsp;</div></a>
+    <%= render :partial => 'layouts/global/login_controls' %>
+  </div>}
+
+file 'app/views/layouts/global/_footer.html.erb',
+%q{<div class="block" id="footer">
+</div>
+<div class="block" align="center">
+   <%= locale_link 'Deutsch', 'de' %>
+ | <%= locale_link 'English', 'en' %>
+ | <%= locale_link 'Español', 'es' %>
+ | <%= locale_link 'Français', 'fr' %>
+ | <%= locale_link 'Nederlands', 'nl' %>
+ | <%= locale_link 'Русский язык', 'ru' %>
+ | <%= locale_link '中文', 'zh' %>
+ | <%= locale_link '日本語', 'ja' %>
+</div>}
+
+file 'app/views/layouts/global/_login_controls.html.erb',
+%q{<div class="span-8 column">
+      <div id="user-login">
+        <% if logged_in? -%>
+          <%= link_to t('muck.users.sign_out_title'), logout_path %>
+        <% else -%>
+          <%= link_to t('muck.users.sign_up'), signup_path %> | <%= link_to t('muck.users.sign_in'), login_path %> 
+        <% end -%>
+      </div>
+    </div>}
+
+file 'public/stylesheets/default.css',
+%q{
 }
-
 
 file 'Capfile',
 %Q{load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
 load 'config/deploy'  
 }
-
 
 file 'config/database.yml',
 %Q{development:
@@ -379,7 +413,7 @@ file 'app/controllers/default_controller.rb',
     return unless request.post?
     body = []
     params.each_pair { |k,v| body << "#{k}: #{v}"  }
-    HomeMailer.deliver_mail(:subject => I18n.t("contact.contact_response_subject", :application_name => GlobalConfig.application_name), :body=>body.join("\n"))
+    BasicMailer.deliver_mail(:subject => I18n.t("contact.contact_response_subject", :application_name => GlobalConfig.application_name), :body=>body.join("\n"))
     flash[:notice] = I18n.t('general.thank_you_contact')
     redirect_to contact_url    
   end
@@ -408,7 +442,7 @@ file 'app/views/default/contact.html.erb',
 
 	<h2><%= I18n.t('contact.contact_us') %></h2>
 
-	<form action="/contact/" method="post">
+	<% form_tag('/contact', :id => "contact_form") do -%>
 	
 	  <div class="row clear">
 	    <label for="form_name"><%= I18n.t('contact.name') %></label>
@@ -444,7 +478,7 @@ file 'app/views/default/contact.html.erb',
   
 	  <div class="clear"></div>
 
-	</form>
+	<% end -%>
 		
 </div>}
 
