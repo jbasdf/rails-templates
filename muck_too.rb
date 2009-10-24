@@ -16,29 +16,54 @@ def file_inject(file_name, sentinel, string, before_after = :after)
   end
 end
 
+def file_insert(file_name, sentinel, string, before_after = :after)
+  log 'file_insert', file_name
+  gsub_file file_name, /(#{Regexp.escape(sentinel)})/mi do |match|
+    if :after == before_after
+      "#{match} #{string} "
+    else
+      " #{string} #{match}"
+    end
+  end
+end
+
 install_everything = true if yes?('Install everything? (y/n)')
 if !install_everything
   install_muck_blogs = true if yes?('Install blog system? (Muck Blogs) (y/n)')
-  install_muck_content = true if yes?('Install content system (Muck Content)? (y/n)') || install_muck_blogs
-  install_muck_profiles = true if yes?('Install profile system (Muck Profiles)? (y/n)') || install_muck_activity
+  install_muck_content = true if yes?('Install content system (Muck Content)? (y/n)')
+  install_muck_profiles = true if yes?('Install profile system (Muck Profiles)? (y/n)')
   install_muck_raker = true if yes?('Muck Raker? (y/n)')
+  install_muck_shares = true if yes?('Install muck shares (Muck Shares)? (y/n)')
+  install_muck_activity = true if yes?('Install activity system (Muck Activities)? (y/n)')
   install_muck_friends = true if yes?('Install friends system (Muck Friends)? (y/n)')
+  install_muck_invites = true if yes?('Install invite system (Muck Invites)? (y/n)')
   install_file_uploads = true if yes?('Install file uploads? (y/n)')
   install_cms_lite = true if yes?('Install CMS Lite? (y/n)')
-  install_solr = true if yes?('Install Acts As Solr (Muck Solr)? (y/n)') || install_muck_content
+  install_solr = true if yes?('Install Acts As Solr (Muck Solr)? (y/n)')
   install_disguise = true if yes?('Install disguise theme engine? (y/n)')
-  install_muck_comments = true if yes?('Install comment engine (Muck Comments)?  This is required for the muck activity engine. (y/n)') || install_muck_activity || install_muck_blogs || install_muck_raker
-  install_muck_shares = true if yes?('Install muck shares (Muck Shares)? (y/n)') || install_muck_raker
-  install_muck_activity = true if yes?('Install activity system (Muck Activities)? (y/n)') || install_muck_shares
-  install_tagging = true if yes?('Install Tagging? (y/n)') || install_muck_content
-  install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)') || install_muck_content
+  install_muck_comments = true if yes?('Install comment engine (Muck Comments)?  This is required for the muck activity engine. (y/n)')
+  install_tagging = true if yes?('Install Tagging? (y/n)')
+  install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)')
+  
+  # Deal with dependencies
+  install_muck_shares ||= install_muck_raker
+  install_muck_activity ||= install_muck_shares
+  install_muck_content ||= install_muck_blogs
+  install_muck_profiles ||= install_muck_activity
+  install_solr ||= install_muck_content
+  install_muck_comments ||= install_muck_activity || install_muck_blogs || install_muck_raker
+  install_tagging ||= install_muck_content
+  install_babelphish ||= install_muck_content
 end
+
+installed_gems = []
 
 #====================
 # babelphish
 #====================
 if install_babelphish || install_everything
   gem 'babelphish'
+  installed_gems << 'babelphish'
 end
 
 #====================
@@ -49,7 +74,8 @@ if install_solr || install_everything
   # TODO add code to install solr config files
   # TODO muck-solr requires muck_raker.rb to be installed in initializers.
   # that file should probably be setup by a rake task in muck-solr and be
-  # called muck_solr.rb NOT muck_raker.rb 
+  # called muck_solr.rb NOT muck_raker.rb
+  installed_gems << 'muck-solr'
 end
 
 #====================
@@ -59,6 +85,8 @@ if install_muck_raker || install_everything
   gem 'muck-raker', :lib => 'muck_raker'
   gem "muck-feedbag", :lib => "feedbag", :source => "http://gems.github.com"
   gem "pauldix-feedzirra", :lib => 'feedzirra', :source => "http://gems.github.com"
+  gem "nokogiri"
+  gem "httparty"
   
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
   # Muck raker options
@@ -73,9 +101,19 @@ if install_muck_raker || install_everything
   google_ajax_api_key: ''
   CODE
   
+  file_insert 'app/views/layouts/global/_head.html.erb', "reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame", <<-CODE
+  muck-raker
+  CODE
+  
+  file_inject 'app/views/layouts/global/_head.html.erb', "muck.js", <<-CODE
+  muck_raker.js
+  CODE
+  
   file_append 'Rakefile', <<-CODE
   require 'muck_raker/tasks'
   CODE
+  
+  installed_gems << 'muck-raker'
   
   rake('muck:raker:sync')
 end
@@ -103,6 +141,8 @@ if install_muck_blogs || install_everything
   end
   CODE
 
+  installed_gems << 'muck-blogs'
+  
 end
 
 #====================
@@ -160,6 +200,7 @@ if install_muck_content || install_everything
   
   rake('muck:contents:sync')
   
+  installed_gems << 'muck-contents'
 end
 
 #====================
@@ -183,6 +224,8 @@ if install_muck_shares || install_everything
   CODE
 
   rake('muck:shares:sync')
+  
+  installed_gems << 'muck-shares'
 end
 
 #====================
@@ -203,6 +246,7 @@ if install_muck_profiles || install_everything
   end
   CODE
   
+  installed_gems << 'muck-profiles'
 end
 
 #====================
@@ -223,7 +267,17 @@ if install_muck_activity || install_everything
   enable_activity_video_sharing: true # Turn on video sharing in the activity feed.
   CODE
   
+  file_insert 'app/views/layouts/global/_head.html.erb', "reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame", <<-CODE
+  muck-activities
+  CODE
+  
+  file_inject 'app/views/layouts/global/_head.html.erb', "muck.js", <<-CODE
+  muck_activities.js
+  CODE
+  
   rake('muck:activities:sync')
+  
+  installed_gems << 'muck-activities'
 end
 
 #====================
@@ -251,6 +305,8 @@ if install_muck_friends || install_everything
   CODE
 
   rake('muck:friends:sync')
+  
+  installed_gems << 'muck-friends'
 end
 
 #====================
@@ -262,6 +318,8 @@ if install_cms_lite || install_everything
   require 'cms_lite'
   require 'cms_lite/tasks'
   CODE
+  
+  installed_gems << 'cms-lite'
 end
 
 #====================
@@ -279,6 +337,7 @@ if install_disguise || install_everything
   use_domain_for_themes: false                    # Setting for the disguise plugin.  Themes can be set in the admin UI or determined at run time by the domain name.
   CODE
   
+  installed_gems << 'disguise'
 end
 
 
@@ -333,6 +392,8 @@ if install_file_uploads || install_everything
   
   end
   CODE
+  
+  installed_gems << 'uploader'
   
   rake('uploader:sync')
 end
@@ -393,8 +454,57 @@ if install_muck_comments || install_everything
   map.resources :comments
   CODE
   
+  installed_gems << 'muck-comments'
 end
 
+#====================
+# muck invites
+#====================
+if install_muck_invites || install_everything
+  
+  gem 'muck-invites', :lib => 'muck_invites'
+  
+  file_insert 'app/views/layouts/global/_head.html.erb', "reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame", <<-CODE
+  muck-invites
+  CODE
+  
+  file 'app/models/invite.rb', <<-CODE
+  class Invite < ActiveRecord::Base
+    acts_as_muck_invite
+  end
+  CODE
+  
+  installed_gems << 'muck-invites'
+  
+end
+
+
+#====================
+# muck.rake
+#====================
+file 'lib/tasks/muck.rake', <<-CODE
+require 'rake'
+begin
+  require 'git'
+rescue LoadError
+  puts "git gem not installed.  If git functionality is required run 'sudo gem install git'"
+end
+require 'fileutils'
+
+namespace :muck do
+  
+  def muck_gems
+    ["#{installed_gems.join('","')}"]
+  end
+  
+  desc 'Translate app'
+  task :translate => :environment do
+    puts 'translating'
+    system("babelphish -o -y #{RAILS_ROOT}/config/locales/en.yml")
+  end
+
+end
+CODE
 
 #====================
 # tagging

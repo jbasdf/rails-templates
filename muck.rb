@@ -106,10 +106,13 @@ file 'config/global_config.yml',
   # Email server configuration
   # These settings are used in smtp_gmail.rb.  You can sign up for a free Google Apps account here: http://www.google.com/apps/intl/en/group/index.html
   # If you wish to use a different email server change the settings in smtp_gmail.rb
+  email_server_address: "smtp.TODO.com"   # Address of email server. ie smtp.sendgrid.net
   email_user_name: 'system@TODO.com'      # Username to sign into a gmail account
   email_password: 'TODO_secret_password'  # Password for your gmail account
   base_domain: #{domain_name}             # Domain name for your application without any subdomain or other settings.
 
+  
+  
   # sign up options
   automatically_activate: true                    # Automatically activate a user after signup.  If this is false the user will need to click on a link or answer a captcha to activate their account.
   automatically_login_after_account_create: true  # Automatically log the user into the site after sign up.  Works if automatically_activate is true or if you use a captcha.
@@ -363,6 +366,32 @@ initializer 'protect_attributes.rb',
       end
   end
 end}
+
+initializer 'smtp.rb',
+%Q{unless Rails.env.test? # we don't want tests attempting to send out email
+  ActionMailer::Base.delivery_method = :smtp
+  ActionMailer::Base.smtp_settings = {
+    :address => GlobalConfig.email_server_address,
+    :port => 25,
+    :authentication => :plain,
+    :enable_starttls_auto => true,
+    :user_name => GlobalConfig.email_user_name,
+    :password => GlobalConfig.email_password,
+    :domain => GlobalConfig.base_domain
+  }
+  # ActionMailer::Base.smtp_settings = {
+  #   :address => "smtp.gmail.com",
+  #   :port => 587,
+  #   :authentication => :plain,
+  #   :enable_starttls_auto => true,
+  #   :user_name => GlobalConfig.email_user_name,
+  #   :password => GlobalConfig.email_password,
+  #   :domain => GlobalConfig.base_domain
+  # }
+end
+
+ActionMailer::Base.default_url_options[:host] = GlobalConfig.application_url
+}
 
 #==================== 
 # Build custom application files

@@ -51,11 +51,7 @@ ENV["RAILS_ENV"] = "test"
 require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
 require 'test_help'
 require 'ruby-debug'
-gem 'thoughtbot-factory_girl' # from github
-require 'factory_girl'
-require 'mocha'
 require 'authlogic/test_case'
-require 'redgreen' rescue LoadError
 require File.expand_path(File.dirname(__FILE__) + '/factories')
 require File.join(File.dirname(__FILE__), 'shoulda_macros', 'controller')
 require File.join(File.dirname(__FILE__), 'shoulda_macros', 'models')
@@ -292,7 +288,7 @@ module MuckControllerMacros
     login_url = args.delete :login_url
     args.each do |action, verb|
       should "Require login for '\#{action}' action" do
-        if [:put, :delete].include?(verb) # put and delete require an id even if it is a bogus one
+        if [:edit].include?(action) || [:put, :delete].include?(verb) # edit, put and delete require an id even if it is a bogus one
           send(verb, action, :id => 1)
         else
           send(verb, action)
