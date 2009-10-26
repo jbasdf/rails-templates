@@ -94,8 +94,8 @@ if install_muck_raker || install_everything
   enable_raker_comments: true
   enable_raker_shares: true
   # Get these values from your Amazon account.  They are required if you wish to access any of Amazon's APIs
-  amazon_secret_access_key: ''
-  amazon_access_key_id: ''
+  amazon_secret_access_key: ''  # This is the secret value provided by amazon.   This value is hidden by default.
+  amazon_access_key_id: ''  # This is your access key id.  This value is not hidden by default.
   amazon_associate_tag: ''
   # Google ajax api key is optional but recommended by google.  Get one here: http://code.google.com/apis/ajaxsearch/signup.html
   google_ajax_api_key: ''
