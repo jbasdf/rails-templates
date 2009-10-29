@@ -405,7 +405,7 @@ end
 if install_muck_comments || install_everything
 
   # nested set is required for comments
-  gem "collectiveidea-awesome_nested_set", :lib => 'awesome_nested_set'
+  gem "awesome_nested_set"
   
   file 'app/models/comment.rb', <<-CODE
   class Comment < ActiveRecord::Base
@@ -510,7 +510,7 @@ CODE
 # tagging
 #====================
 if install_tagging || install_everything
-  gem 'mbleigh-acts-as-taggable-on', :source => "http://gems.github.com", :lib => "acts-as-taggable-on"
+  gem 'acts-as-taggable-on'
   file_inject('app/helpers/application_helper.rb', 'module ApplicationHelper', 'include TagsHelper')
   file_inject('app/models/user.rb', 'class User < ActiveRecord::Base', 'acts_as_tagger')
   run "script/generate acts_as_taggable_on_migration"
