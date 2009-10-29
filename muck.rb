@@ -38,7 +38,6 @@ plugin 'hoptoad_notifier', :git => "git://github.com/thoughtbot/hoptoad_notifier
 plugin 'recaptcha', :git => "git://github.com/ambethia/recaptcha.git"
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
 plugin 'jquery', :svn => "http://ennerchi.googlecode.com/svn/trunk/plugins/jrails"
-plugin 'validation_reflection', :git => "git://github.com/redinger/validation_reflection.git"
 plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attributes.git"
 
 
