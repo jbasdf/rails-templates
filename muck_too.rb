@@ -87,18 +87,26 @@ if install_muck_raker || install_everything
   gem "pauldix-feedzirra", :lib => 'feedzirra', :source => "http://gems.github.com"
   gem "nokogiri"
   gem "httparty"
+  gem "river"
   
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  
   # Muck raker options
   inform_admin_of_global_feed: true
   enable_raker_comments: true
   enable_raker_shares: true
+  
   # Get these values from your Amazon account.  They are required if you wish to access any of Amazon's APIs
   amazon_secret_access_key: ''  # This is the secret value provided by amazon.   This value is hidden by default.
   amazon_access_key_id: ''  # This is your access key id.  This value is not hidden by default.
   amazon_associate_tag: ''
+  ecs_to_rss_wishlist: "http://www.example.com/ecs_to_rss-wishlist.xslt"  # url of xslt stylesheet for transforming amazon xml.  This stylesheet is provided by the 'river' gem
+  
   # Google ajax api key is optional but recommended by google.  Get one here: http://code.google.com/apis/ajaxsearch/signup.html
   google_ajax_api_key: ''
+  show_google_search: true        # Determines whether or not a google search is displayed on the topic page
+  load_feeds_on_server: false     # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
+  combine_feeds_on_server: false  # Combines feeds loaded on the server
   CODE
   
   file_insert 'app/views/layouts/global/_head.html.erb', "reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame", <<-CODE
