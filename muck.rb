@@ -53,7 +53,7 @@ gem 'mislav-will_paginate', :lib => 'will_paginate', :source => 'http://gems.git
 gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.1.1'
 gem 'thoughtbot-paperclip', :lib => 'paperclip', :source => 'http://gems.github.com'
 gem 'friendly_id'
-gem "openrain", :lib => 'smtp_tls' # This is only require for installations that have ruby 1.8.6.  If you are running Ruby 1.8.7 you may comment this out and remove require "smtp_tls" from smtp_gmail.rb
+gem "action_mailer_tls", :lib => 'smtp_tls' # This is only require for installations that have ruby 1.8.6.  If you are running Ruby 1.8.7 you may comment this out and remove require "smtp_tls" from smtp_gmail.rb
 
 
 # Install gems on local system
