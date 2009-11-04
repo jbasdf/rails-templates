@@ -83,8 +83,8 @@ end
 #====================
 if install_muck_raker || install_everything
   gem 'muck-raker', :lib => 'muck_raker'
-  gem "muck-feedbag", :lib => "feedbag", :source => "http://gems.github.com"
-  gem "pauldix-feedzirra", :lib => 'feedzirra', :source => "http://gems.github.com"
+  gem "feedbag"
+  gem "feedzirra"
   gem "nokogiri"
   gem "httparty"
   gem "river"
