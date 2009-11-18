@@ -54,6 +54,7 @@ if !install_everything
   install_muck_comments ||= install_muck_activity || install_muck_blogs || install_muck_raker
   install_tagging ||= install_muck_content
   install_babelphish ||= install_muck_content
+  install_file_uploads ||= install_muck_content
 end
 
 installed_gems = []
@@ -83,7 +84,7 @@ end
 #====================
 if install_muck_raker || install_everything
   gem 'muck-raker', :lib => 'muck_raker'
-  gem "feedbag"
+  gem "muck-feedbag", :lib => 'feedbag'
   gem "feedzirra"
   gem "nokogiri"
   gem "httparty"
@@ -158,6 +159,7 @@ end
 #====================
 if install_muck_content || install_everything
   gem 'muck-contents', :lib => 'muck_contents'
+  gem 'tiny_mce'
   
   file_append 'Rakefile', <<-CODE
   require 'muck_contents/tasks'
