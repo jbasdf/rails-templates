@@ -36,18 +36,16 @@ git :init
 #====================
 plugin 'hoptoad_notifier', :git => "git://github.com/thoughtbot/hoptoad_notifier.git"
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
-plugin 'jquery', :svn => "http://ennerchi.googlecode.com/svn/trunk/plugins/jrails"
 plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attributes.git"
-
 
 #====================
 # gems 
 #====================
 gem 'muck-engine', :lib => 'muck_engine'
 gem 'muck-users', :lib => 'muck_users'
-
-gem "authlogic", :lib => 'authlogic'
-gem "searchlogic", :lib => 'searchlogic'
+gem 'jrails'
+gem 'authlogic'
+gem 'searchlogic'
 gem 'will_paginate'
 gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.1.1'
 gem 'paperclip'

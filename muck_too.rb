@@ -27,6 +27,13 @@ def file_insert(file_name, sentinel, string, before_after = :after)
   end
 end
 
+def file_replace(file_name, string, replace)
+  gsub_file file_name, /(#{Regexp.escape(string)})/mi do |match|
+    "#{replace}"
+  end
+end
+
+
 install_everything = true if yes?('Install everything? (y/n)')
 if !install_everything
   install_muck_blogs = true if yes?('Install blog system? (Muck Blogs) (y/n)')
@@ -44,6 +51,8 @@ if !install_everything
   install_muck_comments = true if yes?('Install comment engine (Muck Comments)?  This is required for the muck activity engine. (y/n)')
   install_tagging = true if yes?('Install Tagging? (y/n)')
   install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)')
+  install_geokit = true if yes?('Install Geokit? (y/n)')
+  install_sms = true if yes?('Install SMS support? (y/n)')
   
   # Deal with dependencies
   install_muck_shares ||= install_muck_raker
@@ -55,9 +64,37 @@ if !install_everything
   install_tagging ||= install_muck_content
   install_babelphish ||= install_muck_content
   install_file_uploads ||= install_muck_content
+  install_geokit ||= install_muck_profiles
+
 end
 
 installed_gems = []
+
+#====================
+# Geokit
+#====================
+if install_geokit
+  gem 'geokit'
+  plugin 'geokit-rails', :git => "git://github.com/andre/geokit-rails.git"
+  
+  file_replace 'config/initializers/geokit_config.rb', 'REPLACE_WITH_YOUR_YAHOO_KEY', <<-CODE
+  # http://developer.yahoo.com/faq/index.html#appid
+  GlobalConfig.yahoo_geo_key
+  
+  CODE
+  file_replace 'config/initializers/geokit_config.rb', 'REPLACE_WITH_YOUR_GOOGLE_KEY', <<-CODE
+  # http://www.google.com/apis/maps/signup.html
+  GlobalConfig.google_geo_key
+  CODE
+  puts 'Look in global_config.yml for the urls where you can aquire the keys for the yahoo and google key required to make geo coding work.'
+end
+
+#====================
+# SMS fu
+#====================
+if install_sms
+  plugin 'sms-fu', :git => "git://github.com/brendanlim/sms-fu.git"
+end
 
 #====================
 # babelphish
@@ -478,11 +515,22 @@ if install_muck_invites || install_everything
   muck-invites
   CODE
   
+  file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
+  acts_as_muck_inviter
+  CODE
+  
   file 'app/models/invite.rb', <<-CODE
   class Invite < ActiveRecord::Base
     acts_as_muck_invite
   end
   CODE
+  
+  file 'app/models/invitee.rb', <<-CODE
+  class Invitee < ActiveRecord::Base
+    acts_as_muck_invitee
+  end
+  CODE
+  
   
   installed_gems << 'muck-invites'
   
@@ -541,4 +589,3 @@ end
 puts "================================================================================"
 puts "SUCCESS!"
 puts "================================================================================"
-
