@@ -453,6 +453,7 @@ if install_muck_comments || install_everything
 
   # nested set is required for comments
   gem "awesome_nested_set"
+  gem "sanitize"
   
   file 'app/models/comment.rb', <<-CODE
   class Comment < ActiveRecord::Base
@@ -478,7 +479,7 @@ if install_muck_comments || install_everything
   end
   CODE
 
-  file 'app/controllers/comment_controller.rb', <<-CODE
+  file 'app/controllers/comments_controller.rb', <<-CODE
   class CommentsController < Muck::CommentsController
     
     before_filter :login_required # require the user to be logged in to make a comment

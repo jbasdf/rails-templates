@@ -86,84 +86,168 @@ CODE
 file 'config/global_config.yml',
 %Q{default: &DEFAULT
   # All fields that need to be changed are marked with 'TODO'
+  default: &DEFAULT
 
-  application_name: #{app_name}
+    #
+    # Replace #{domain_name} in this file with your website's domain name
+    #
 
-  # Sent in emails to users
-  from_email: 'support@TODO.com'           # Emails will come from this address i.e. noreply@example.com, support@example.com, system@example.com, etc
-  from_email_name: 'TODO Name'             # This will show up as the name on emails.  i.e. support@example.com <Example> 
-  support_email: 'support@TODO.com'        # Support email for your application.  This is used for contact us etc.
-  admin_email: 'admin@example.com'         # Admin email for your application
-  customer_service_number: '1-800-'
+    # Global application values.  These are used to display the app name, send emails, and configure where system emails go.
+    application_name: '#{app_name}'         # Common name for your application.  i.e. My App, Billy Bob, etc
+    from_email: 'support@#{domain_name}'    # Emails will come from this address i.e. noreply@#{domain_name}, support@#{domain_name}, system@#{domain_name}, etc
+    from_email_name: 'TODO Name'            # This will show up as the name on emails.  i.e. support@#{domain_name} <Example>
+    support_email: 'support@#{domain_name}' # Support email for your application.  This is used for contact us etc.
+    admin_email: 'admin@#{domain_name}'     # Admin email for your application
+    customer_service_number: '1-800-'       # Phone number if you have one (optional)
 
-  # Email charset
-  mail_charset: 'utf-8'
+    # Email charset.  No need to change this unless you have a good reason to change the encoding.
+    mail_charset: 'utf-8'
 
-  # Email server configuration
-  # These settings are used in smtp_gmail.rb.  You can sign up for a free Google Apps account here: http://www.google.com/apps/intl/en/group/index.html
-  # If you wish to use a different email server change the settings in smtp_gmail.rb
-  email_server_address: "smtp.TODO.com"   # Address of email server. ie smtp.sendgrid.net
-  email_user_name: 'system@TODO.com'      # Username to sign into a gmail account
-  email_password: 'TODO_secret_password'  # Password for your gmail account
-  base_domain: #{domain_name}             # Domain name for your application without any subdomain or other settings.
+    # Email server configuration
+    # Sendgrid is easy: https://sendgrid.com/user/signup
+    email_server_address: "smtp.sendgrid.net"     # Email server address.  This works for sendgrid
+    email_user_name: 'TODO_admin@#{domain_name}'  # Email server username
+    email_password: 'TODO_password'               # Email server password
+    base_domain: '#{domain_name}'                 # Basedomain that emails will come from
 
-  
-  
-  # sign up options
-  automatically_activate: true                    # Automatically activate a user after signup.  If this is false the user will need to click on a link or answer a captcha to activate their account.
-  automatically_login_after_account_create: true  # Automatically log the user into the site after sign up.  Works if automatically_activate is true or if you use a captcha.
-  send_welcome: true
+    # sign up options
+    automatically_activate: true                    # Automatically active a users account during registration. If true the user won't get a 
+                                                    # 'confirm account' email. If false then the user will need to confirm their account via an email.
+    automatically_login_after_account_create: true  # Automatically log the user in after they have setup their account. This should be false if you 
+                                                    # require them to activate their account.
+    send_welcome: true                              # Send out a welcome email after the user has signed up.
 
-  # if you use recaptcha you will need to also provide a public and private
-  # key available from http://recaptcha.net.
-  use_recaptcha: false                            # Captcha is a popular way to keep bots out of your site.  Get a key at http://recaptcha.net before turning use_recaptcha to true.
-  recaptcha_pub_key: GET_A_RECAPTCHA_KEY(TODO)
-  recaptcha_priv_key: GET_A_RECAPTCHA_KEY(TODO)
+    # if you use recaptcha you will need to also provide a public and private
+    # key available from http://recaptcha.net.
+    use_recaptcha: false                            # This will turn on recaptcha during registration. This is an alternative to sending the 
+                                                    # user a confirm email and can help reduce spam registrations.
+    recaptcha_pub_key: GET_A_RECAPTCHA_KEY(TODO)    # key available from http://recaptcha.net
+    recaptcha_priv_key: GET_A_RECAPTCHA_KEY(TODO)
 
-  # jgrowl related settings
-  growl_enabled: false                            # Use jgrowl messages instead of inline messages.  This will popup flash and error messages using jgrowl
+    # jgrowl related settings
+    growl_enabled: false    # If true then notifications and errors will popup in an overlay div similar to 'growl' on the mac.
 
-  # application configuration
-  let_users_delete_their_account: false           # turn on/off ability for users to delete their own account
+    # application configuration
+    let_users_delete_their_account: false  # Turn on/off ability for users to delete their own account. It is not recommended that you let 
+                                           # users delete their own accounts since the delete can cascade through the system with unknown results.
 
-  # ssl
-  enable_ssl: false                               # Turn on ssl if you have a certificate in place
+    # ssl
+    enable_ssl: false # Enable ssl if you have an ssl certificate installed.  This will provide security between the client and server.
 
-  # keys
-  hoptoad_key: 'TODO get a hoptoad key'           # Get a Hoptoad key here: http://hoptoadapp.com/welcome
+    # keys
+    hoptoad_key: '' # Get a hoptoad key - https://hoptoadapp.com/account/new
 
-  # Google analtyics configuration
-  google_tracking_code: ""
-  google_tracking_set_domain: ""
-  
-production:
-  <<: *DEFAULT
+    # Google Analtyics Configuration.  This will enable Google Analytics on your site and will be used if your template includes:
+    #                                  <%= render :partial => 'layouts/global/google_analytics' %>
+    google_tracking_code: ""                    # Get a tracking code here: http://www.google.com/analytics/. The codes look like this: 'UA-9685000-0'
+    google_tracking_set_domain: "#{domain_name}"   # Base domain provided to Google Analytics. Useful if you are using subdomains but want all traffic 
+                                                # recorded into one account.
 
-  # Sent in emails to users
-  application_url: 'www.example.com'              # Application url
+    #
+    # The settings below configure the various engines that provide extra functionality to the application.
+    #
 
-staging:
-  <<: *DEFAULT
+    # Services Configuration
+    inform_admin_of_global_feed: true   # If true then the 'admin_email' will recieve an email anytime a global feed (one that is not 
+                                        # attached to any object) is added.
+    # These settings apply to the toolbar which can be seen here: http://www.folksemantic.com/visits/53879
+    enable_services_comments: true      # Enables or disables comments in the frame that wraps content as a user browses recommendation results
+    enable_services_shares: true        # Enables or disables sharing in the frame that wraps content as a user browses recommendation results
 
-  # Sent in emails to users
-  application_url: 'staging.example.com'
+    # Amazon service settings.  These are only needed if you wish to let a user add their Amazon Wishlist as an identity service
+    amazon_secret_access_key: ''        # Amazon access key.  Get this from your Amazon services account: http://aws.amazon.com/
+    amazon_access_key_id: ''            # Amazon key id.  Get this from your Amazon services account: http://aws.amazon.com/
+    amazon_associate_tag: 'amzfeeds-20' # Amazon associate tag.  Not required.  This will be added to amazon feeds if present.
+    ecs_to_rss_wishlist: "http://www.#{domain_name}/ecs_to_rss-wishlist.xslt" # xslt file that can transform xml from Amazon.  This file is found in /public/ecs_to_rss-wishlist.xslt and so changing #{domain_name} to you domain will make this work.
 
-development:
-  <<: *DEFAULT
+    google_ajax_api_key: ''                 # get a Google ajax api key: http://code.google.com/apis/ajaxsearch/signup.html
+    google_ajax_referer: 'www.#{domain_name}'  # The website making requests to google.
+    show_google_search: true                # Determines whether or not a google search is displayed on the topic page
+    load_feeds_on_server: false             # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
+    combine_feeds_on_server: false          # Combines feeds loaded on the server
 
-  application_url: 'localhost:3000'
+    # Geo Kit Configuration
+    # TODO make sure the google_ajax_api_key from above can be used with geokit.  If it can then refactor and remove google_geo_key in favor of just using a single key.
+    google_geo_key: '' # Get google key from http://www.google.com/apis/maps/signup.html
+    yahoo_geo_key: '' # Get yahoo key from http://developer.yahoo.com/maps/rest/V1/geocode.html
 
-test:
-  <<: *DEFAULT
+    # Oauth Configuration
+    # Oauth permits access to a user's account on remote servers.  For example, instead of asking for a user's Twitter username and password
+    # the system can obtain access via Oauth and then make posts on behave of the user.
+    twitter_oauth_key: ''     # Get twitter credentials here: http://twitter.com/apps
+    twitter_oauth_secret: ''
 
-  # controls account activation and automatic login
-  automatically_activate: false
-  automatically_login_after_account_create: false
+    # Contents Configuration
+    git_repository: ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
+    content_git_repository: false       # Should be set to false as git integration is not currently working.
+    enable_auto_translations: false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
+    content_enable_solr: true           # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
+                                        # then set this value to false (but search will be disabled).
+    content_css: ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
+                                        # Note that Rails will typically generate a single all.css stylesheet.  Setting the stylesheets here let's 
+                                        # the site administrator control which css is present in the content editor and thus which css an end 
+                                        # user has access to to style their content.
 
-  # turn off for testing
-  use_recaptcha: false
+    # Blogs Configuration
+    enable_post_activities: true    # If the activity system is installed then setting this to true will add an activity to the user's activity 
+                                    # feed each time they make a post.  If the activity system is not install then this value should be false.
 
-  application_url: 'localhost:3000'
+    # Friend Configuration
+    # The friend system provides a hybrid friend/follow model.  Either mode can be turned off or both can be enabled
+    # If only following is enabled then users will be provided the ability to follow, unfollow, and block
+    # If only friending is enabled then users will be provided a 'friend request' link and the ability to accept friend requests
+    # If both modes are are enabled then users will be able to follow other users.  A mutual follow results in 'friends'.  An unfollow 
+    # leaves the other party as just a follower.
+    # Note that at least one mode must be enabled. 
+    enable_following: true          # Turn on 'following'.  This is similar to the 'follow' functionality on Twitter in that it let's users watch one 
+                                    # another's activities without having explicit permission from the user.  A mutual follow essentially becomes a
+                                    # friendship.
+    enable_friending: false         # Turn on friend system.
+    enable_friend_activity: true    # If true then friend related activity will show up in the activity feed.  Requires muck-activities gem
+
+    # Activity Configuration
+    enable_live_activity_updates: true  # Turns on polling inside the user's activity feed so they constantly get updates from the site
+    live_activity_update_interval: 60   # time between updates to live activity feed in seconds
+    enable_activity_comments: true      # Turn on comments in the activity feed
+    enable_activity_file_uploads: true  # Turn on file uploads in the activity feed.  Requires that uploader be installed.
+    enable_activity_image_uploads: true # Turn on image uploads in the activity feed.  Requires that uploader be installed.
+    enable_activity_video_sharing: true # Turn on video sharing in the activity feed.
+
+    # Theme Configuration
+    use_domain_for_themes: false  # If the disguise gem is installed it is possible to change the 'theme' or look of the site based on the current domain.
+
+  #
+  # Provide settings specific to each environment below.  For example, in production application_url will be a real domain name
+  # while in development application_url will typically be something like 'localhost:3000'
+  #
+  production:
+    <<: *DEFAULT
+    content_css: ['/stylesheets/all.css']
+    # Sent in emails to users
+    application_url: 'www.#{domain_name}'
+
+  staging:
+    <<: *DEFAULT
+
+    # Sent in emails to users
+    application_url: 'staging.#{domain_name}'
+
+  development:
+    <<: *DEFAULT
+
+    application_url: 'localhost:3000'
+
+  test:
+    <<: *DEFAULT
+
+    # controls account activation and automatic login
+    automatically_activate: false
+    automatically_login_after_account_create: false
+
+    # turn off for testing
+    use_recaptcha: false
+
+    application_url: 'localhost:3000'
 
 }
 
