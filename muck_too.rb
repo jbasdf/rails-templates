@@ -53,6 +53,7 @@ if !install_everything
   install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)')
   install_geokit = true if yes?('Install Geokit? (y/n)')
   install_sms = true if yes?('Install SMS support? (y/n)')
+  install_muck_oauth = true if yes?('Install Muck Oauth? (y/n)')
   
   # Deal with dependencies
   install_muck_shares ||= install_muck_raker
@@ -77,15 +78,26 @@ if install_geokit
   gem 'geokit'
   plugin 'geokit-rails', :git => "git://github.com/andre/geokit-rails.git"
   
+  file_inject 'config/initializers/geokit_config.rb', "default: &DEFAULT", <<-CODE
+  require 'geokit'
+  CODE
+  
+  file_inject 'vendor/plugins/geokit-rails/init.rb', "default: &DEFAULT", <<-CODE
+  require 'geokit'
+  CODE
+  
   file_replace 'config/initializers/geokit_config.rb', 'REPLACE_WITH_YOUR_YAHOO_KEY', <<-CODE
   # http://developer.yahoo.com/faq/index.html#appid
   GlobalConfig.yahoo_geo_key
   
   CODE
+  
   file_replace 'config/initializers/geokit_config.rb', 'REPLACE_WITH_YOUR_GOOGLE_KEY', <<-CODE
   # http://www.google.com/apis/maps/signup.html
   GlobalConfig.google_geo_key
+  
   CODE
+  
   puts 'Look in global_config.yml for the urls where you can aquire the keys for the yahoo and google key required to make geo coding work.'
 end
 
@@ -161,7 +173,50 @@ if install_muck_raker || install_everything
   
   installed_gems << 'muck-raker'
   
-  rake('muck:raker:sync')
+end
+
+#====================
+# muck oauth
+#====================
+if install_muck_oauth || install_everything
+  gem 'muck-oauth', :lib => 'muck_oauth'
+  
+  file_append 'Rakefile', <<-CODE
+  require 'muck_oauth/tasks'
+  CODE
+  
+  file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
+  # Oauth
+  # Twitter api access: http://www.twitter.com/apps 
+  twitter_oauth_key: ""
+  twitter_oauth_secret: ""
+
+  # Google api access: http://code.google.com/apis/accounts/docs/RegistrationForWebAppsAuto.html#register
+  google_oauth_key: ""
+  google_oauth_secret: ""
+
+  # Yahoo api access: http://developer.yahoo.com/flickr/
+  # yahoo_oauth_key: ""
+  # yahoo_oauth_secret: ""
+
+  # Flick api access: http://www.flickr.com/services/apps/create/apply
+  # flickr_oauth_key: ""
+  # flickr_oauth_secret: ""
+
+  # Linked In api access: https://www.linkedin.com/secure/developer
+  linkedin_oauth_key: ""
+  linkedin_oauth_secret: ""
+
+  # Friendfeed api access: https://friendfeed.com/account/login?next=%2Fapi%2Fregister
+  friendfeed_oauth_key: ""
+  friendfeed_oauth_secret: ""  
+
+  # Fire Eagle api access: https://fireeagle.yahoo.net/developer/manage
+  # fireeagle_oauth_key: "" 
+  # fireeagle_oauth_secret: ""
+  CODE
+  
+  installed_gems << 'muck-oauth'
 end
 
 #====================
@@ -173,8 +228,6 @@ if install_muck_blogs || install_everything
   file_append 'Rakefile', <<-CODE
   require 'muck_blogs/tasks'
   CODE
-  
-  rake('muck:blogs:sync')
   
   file_inject 'config/global_config.yml', "default: &DEFAULT", <<-CODE
   # Blogs
@@ -245,8 +298,6 @@ if install_muck_content || install_everything
   acts_as_muck_content_handler
   CODE
   
-  rake('muck:contents:sync')
-  
   installed_gems << 'muck-contents'
 end
 
@@ -270,8 +321,6 @@ if install_muck_shares || install_everything
   require 'muck_shares/tasks'
   CODE
 
-  rake('muck:shares:sync')
-  
   installed_gems << 'muck-shares'
 end
 
@@ -284,8 +333,6 @@ if install_muck_profiles || install_everything
   file_append 'Rakefile', <<-CODE
   require 'muck_profiles/tasks'
   CODE
-  
-  rake('muck:profiles:sync')
   
   file 'app/models/profile.rb', <<-CODE
   class Profile < ActiveRecord::Base
@@ -322,8 +369,6 @@ if install_muck_activity || install_everything
   muck_activities.js
   CODE
   
-  rake('muck:activities:sync')
-  
   installed_gems << 'muck-activities'
 end
 
@@ -351,15 +396,13 @@ if install_muck_friends || install_everything
   
   CODE
 
-  rake('muck:friends:sync')
-  
   installed_gems << 'muck-friends'
 end
 
 #====================
 # cms lite
 #====================
-if install_cms_lite || install_everything
+if install_cms_lite
   gem 'cms-lite', :lib => 'cms_lite'
   file_append 'Rakefile', <<-CODE
   require 'cms_lite'
@@ -576,17 +619,24 @@ if install_tagging || install_everything
 end
 
 #====================
+# Sync in assets from the gems
+#====================
+rake('muck:sync')
+
+#====================
 # Run any needed migrations
 #====================
 rake('db:migrate')
 
-#====================
-# muck raker default data
-#====================
-if install_muck_raker || install_everything
-  rake("muck:raker:db:populate")
-end
 
 puts "================================================================================"
 puts "SUCCESS!"
 puts "================================================================================"
+puts "To populate the database with feeds and defaults for raker run: "
+puts " rake muck:raker:db:populate"
+puts ""
+puts "Or to populate the database with only the defaults and no feeds run: "
+puts "muck:raker:db:bootstrap_services"
+puts ""
+puts "Update existing default data with defaults specific to muck raker"
+puts "muck:raker:db:populate"
