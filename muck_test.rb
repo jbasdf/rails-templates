@@ -14,7 +14,6 @@ def file_inject(file_name, sentinel, string, before_after=:after)
   end
 end
 
-file_append 'config/environments/test.rb', test_rb
 
 # /////////////////////////////////////////////
 # Create test_helper.rb
@@ -27,6 +26,7 @@ require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
 gem 'muck-engine'
 require 'muck_test_helper'
 require 'authlogic/test_case'
+require File.expand_path(File.dirname(__FILE__) + '/factories')
 
 class ActiveSupport::TestCase
   include MuckTestMethods
@@ -40,6 +40,10 @@ class ActiveSupport::TestCase
   # end
 
 end
+CODE
+
+# Create factories file
+file 'test/factories.rb', <<-CODE
 CODE
 
 # /////////////////////////////////////////////
