@@ -105,7 +105,7 @@ default: &DEFAULT
 
   # Email server configuration
   # Sendgrid is easy: https://sendgrid.com/user/signup
-  email_server_address: "smtp.sendgrid.net"     # Email server address.  This works for sendgrid
+  email_server_address: "smtp.sendgrid.net"     # Email server address.  'smtp.sendgrid.net' works for sendgrid
   email_user_name: 'TODO_admin@#{domain_name}'  # Email server username
   email_password: 'TODO_password'               # Email server password
   base_domain: '#{domain_name}'                 # Basedomain that emails will come from

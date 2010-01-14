@@ -86,15 +86,13 @@ if install_geokit
   require 'geokit'
   CODE
   
-  file_replace 'config/initializers/geokit_config.rb', 'REPLACE_WITH_YOUR_YAHOO_KEY', <<-CODE
-  # http://developer.yahoo.com/faq/index.html#appid
-  GlobalConfig.yahoo_geo_key
+  file_replace 'config/initializers/geokit_config.rb', "'REPLACE_WITH_YOUR_YAHOO_KEY'", <<-CODE
+  GlobalConfig.yahoo_geo_key # http://developer.yahoo.com/faq/index.html#appid
   
   CODE
   
-  file_replace 'config/initializers/geokit_config.rb', 'REPLACE_WITH_YOUR_GOOGLE_KEY', <<-CODE
-  # http://www.google.com/apis/maps/signup.html
-  GlobalConfig.google_geo_key
+  file_replace 'config/initializers/geokit_config.rb', "'REPLACE_WITH_YOUR_GOOGLE_KEY'", <<-CODE
+  GlobalConfig.google_geo_key # http://www.google.com/apis/maps/signup.html  
   
   CODE
   
@@ -154,6 +152,7 @@ if install_muck_raker || install_everything
   
   # Google ajax api key is optional but recommended by google.  Get one here: http://code.google.com/apis/ajaxsearch/signup.html
   google_ajax_api_key: ''
+  request_referer: 'www.example.com' # TODO add requesting url
   show_google_search: true        # Determines whether or not a google search is displayed on the topic page
   load_feeds_on_server: false     # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
   combine_feeds_on_server: false  # Combines feeds loaded on the server
@@ -164,7 +163,7 @@ if install_muck_raker || install_everything
   CODE
   
   file_inject 'app/views/layouts/global/_head.html.erb', "muck.js", <<-CODE
-  muck_raker.js
+  muck_services.js
   CODE
   
   file_append 'Rakefile', <<-CODE
@@ -340,6 +339,10 @@ if install_muck_profiles || install_everything
   end
   CODE
   
+  file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
+  has_muck_profile
+  CODE
+  
   installed_gems << 'muck-profiles'
 end
 
@@ -365,9 +368,15 @@ if install_muck_activity || install_everything
   muck-activities
   CODE
   
-  file_inject 'app/views/layouts/global/_head.html.erb', "muck.js", <<-CODE
-  muck_activities.js
+  file 'app/models/activity.rb', <<-CODE
+  class Activity < ActiveRecord::Base
+    acts_as_muck_activity
+  end
   CODE
+  
+  # file_inject 'app/views/layouts/global/_head.html.erb', "muck.js", <<-CODE
+  # muck_activities.js
+  # CODE
   
   installed_gems << 'muck-activities'
 end
