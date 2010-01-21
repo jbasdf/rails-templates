@@ -465,6 +465,7 @@ if install_disguise || install_everything
     
   file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
   # Theme Configuration
+  themes_enabled: true          # Turns the theme engine on and off.  If false then only the views in the standard app directory will be used.
   use_domain_for_themes: false  # If the disguise gem is installed it is possible to change the 'theme' or look of the site based on the current domain.
                                 # Themes can be set in the admin UI or determined at run time by the domain name.
   CODE
@@ -484,7 +485,12 @@ if install_disguise || install_everything
   CODE
   
   initializer 'disguise.rb', <<-CODE
-  Disguise::USE_DOMAIN_FOR_THEMES = GlobalConfig.use_domain_for_themes
+  Disguise.use_domain_for_themes = GlobalConfig.use_domain_for_themes
+  Disguise.themes_enabled = GlobalConfig.themes_enabled
+
+  # These options are also available to configure disguise.  In most cases the defaults should work fine.
+  Disguise.theme_path = 'themes'
+  Disguise.theme_full_base_path = File.join(RAILS_ROOT, Disguise.theme_path)
   CODE
   
   rake('disguise:setup')
