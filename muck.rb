@@ -145,76 +145,7 @@ default: &DEFAULT
 
   #
   # The settings below configure the various engines that provide extra functionality to the application.
-  #
-
-  # Services Configuration
-  inform_admin_of_global_feed: true   # If true then the 'admin_email' will recieve an email anytime a global feed (one that is not 
-                                      # attached to any object) is added.
-  # These settings apply to the toolbar which can be seen here: http://www.folksemantic.com/visits/53879
-  enable_services_comments: true      # Enables or disables comments in the frame that wraps content as a user browses recommendation results
-  enable_services_shares: true        # Enables or disables sharing in the frame that wraps content as a user browses recommendation results
-
-  # Amazon service settings.  These are only needed if you wish to let a user add their Amazon Wishlist as an identity service
-  amazon_secret_access_key: ''        # Amazon access key.  Get this from your Amazon services account: http://aws.amazon.com/
-  amazon_access_key_id: ''            # Amazon key id.  Get this from your Amazon services account: http://aws.amazon.com/
-  amazon_associate_tag: 'amzfeeds-20' # Amazon associate tag.  Not required.  This will be added to amazon feeds if present.
-  ecs_to_rss_wishlist: "http://www.#{domain_name}/ecs_to_rss-wishlist.xslt" # xslt file that can transform xml from Amazon.  This file is found in /public/ecs_to_rss-wishlist.xslt and so changing #{domain_name} to you domain will make this work.
-
-  google_ajax_api_key: ''                 # get a Google ajax api key: http://code.google.com/apis/ajaxsearch/signup.html
-  google_ajax_referer: 'www.#{domain_name}'  # The website making requests to google.
-  show_google_search: true                # Determines whether or not a google search is displayed on the topic page
-  load_feeds_on_server: false             # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
-  combine_feeds_on_server: false          # Combines feeds loaded on the server
-
-  # Geo Kit Configuration
-  # TODO make sure the google_ajax_api_key from above can be used with geokit.  If it can then refactor and remove google_geo_key in favor of just using a single key.
-  google_geo_key: '' # Get google key from http://www.google.com/apis/maps/signup.html
-  yahoo_geo_key: '' # Get yahoo key from http://developer.yahoo.com/maps/rest/V1/geocode.html
-
-  # Oauth Configuration
-  # Oauth permits access to a user's account on remote servers.  For example, instead of asking for a user's Twitter username and password
-  # the system can obtain access via Oauth and then make posts on behave of the user.
-  twitter_oauth_key: ''     # Get twitter credentials here: http://twitter.com/apps
-  twitter_oauth_secret: ''
-
-  # Contents Configuration
-  git_repository: ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
-  content_git_repository: false       # Should be set to false as git integration is not currently working.
-  enable_auto_translations: false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
-  content_enable_solr: true           # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
-                                      # then set this value to false (but search will be disabled).
-  content_css: ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
-                                      # Note that Rails will typically generate a single all.css stylesheet.  Setting the stylesheets here let's 
-                                      # the site administrator control which css is present in the content editor and thus which css an end 
-                                      # user has access to to style their content.
-
-  # Blogs Configuration
-  enable_post_activities: true    # If the activity system is installed then setting this to true will add an activity to the user's activity 
-                                  # feed each time they make a post.  If the activity system is not install then this value should be false.
-
-  # Friend Configuration
-  # The friend system provides a hybrid friend/follow model.  Either mode can be turned off or both can be enabled
-  # If only following is enabled then users will be provided the ability to follow, unfollow, and block
-  # If only friending is enabled then users will be provided a 'friend request' link and the ability to accept friend requests
-  # If both modes are are enabled then users will be able to follow other users.  A mutual follow results in 'friends'.  An unfollow 
-  # leaves the other party as just a follower.
-  # Note that at least one mode must be enabled. 
-  enable_following: true          # Turn on 'following'.  This is similar to the 'follow' functionality on Twitter in that it let's users watch one 
-                                  # another's activities without having explicit permission from the user.  A mutual follow essentially becomes a
-                                  # friendship.
-  enable_friending: false         # Turn on friend system.
-  enable_friend_activity: true    # If true then friend related activity will show up in the activity feed.  Requires muck-activities gem
-
-  # Activity Configuration
-  enable_live_activity_updates: true  # Turns on polling inside the user's activity feed so they constantly get updates from the site
-  live_activity_update_interval: 60   # time between updates to live activity feed in seconds
-  enable_activity_comments: true      # Turn on comments in the activity feed
-  enable_activity_file_uploads: true  # Turn on file uploads in the activity feed.  Requires that uploader be installed.
-  enable_activity_image_uploads: true # Turn on image uploads in the activity feed.  Requires that uploader be installed.
-  enable_activity_video_sharing: true # Turn on video sharing in the activity feed.
-
-  # Theme Configuration
-  use_domain_for_themes: false  # If the disguise gem is installed it is possible to change the 'theme' or look of the site based on the current domain.
+  # -- Muck Engines Configuration
 
 #
 # Provide settings specific to each environment below.  For example, in production application_url will be a real domain name
