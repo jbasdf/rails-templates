@@ -34,7 +34,6 @@ git :init
 #====================
 # plugins 
 #====================
-plugin 'hoptoad_notifier', :git => "git://github.com/thoughtbot/hoptoad_notifier.git"
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
 plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attributes.git"
 
@@ -50,6 +49,7 @@ gem 'will_paginate'
 gem 'bcrypt-ruby', :lib => 'bcrypt', :version => '>=2.1.1'
 gem 'paperclip'
 gem 'friendly_id'
+gem 'hoptoad_notifier'
 gem "action_mailer_tls", :lib => 'smtp_tls' # This is only require for installations that have ruby 1.8.6.  If you are running Ruby 1.8.7 you may comment this out and remove require "smtp_tls" from smtp_gmail.rb
 gem "recaptcha", :lib => "recaptcha/rails"
 
