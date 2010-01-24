@@ -99,7 +99,7 @@ default: &DEFAULT
   support_email: 'support@#{domain_name}' # Support email for your application.  This is used for contact us etc.
   admin_email: 'admin@#{domain_name}'     # Admin email for your application
   customer_service_number: '1-800-'       # Phone number if you have one (optional)
-  require_beta_code: false                # Determines whether or not a beta code is required to sign up.
+  require_access_code: false              # Determines whether or not an access code is required to sign up.  This can be used for a beta or restricted access sites.
   
   # Email charset.  No need to change this unless you have a good reason to change the encoding.
   mail_charset: 'utf-8'
