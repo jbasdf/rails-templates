@@ -366,12 +366,21 @@ if install_muck_profiles || install_everything
   
   file 'app/models/profile.rb', <<-CODE
   class Profile < ActiveRecord::Base
-    acts_as_muck_profile
+    acts_as_muck_profile :enable_solr => true,
+                         :policy => { :public => [:login, :first_name, :last_name, :about],
+                                      :authenticated => [:location, :city, :state_id, :country_id, :language_id],
+                                      :friends => [:email],
+                                      :private => [] }
   end
   CODE
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
   has_muck_profile
+  CODE
+  
+  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
+  # Profile Configuration
+  profile_enable_solr: false          # Determines whether or not solr is enabled for profiles.  This permits searching users based on their profile
   CODE
   
   installed_gems << 'muck-profiles'
