@@ -35,7 +35,7 @@ git :init
 # plugins 
 #====================
 plugin 'ssl_requirement', :git => 'git://github.com/rails/ssl_requirement.git'
-plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attributes.git"
+#plugin 'validate_attributes', :git => "git://github.com/jbasdf/validate_attributes.git"
 
 #====================
 # gems 
