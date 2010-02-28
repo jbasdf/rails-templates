@@ -586,8 +586,8 @@ end
 #==================== 
 # Muck sync tasks
 #==================== 
-rake('muck:engine:sync')
-rake('muck:users:sync')
+rake('muck:sync:engine')
+rake('muck:sync:users')
 
 #==================== 
 # Setup database

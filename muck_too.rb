@@ -653,6 +653,9 @@ if install_muck_invites || install_everything
   end
   CODE
   
+  file_append 'Rakefile', <<-CODE
+    require 'muck_invites/tasks'
+  CODE
   
   installed_gems << 'muck-invites'
   
@@ -674,7 +677,7 @@ require 'fileutils'
 namespace :muck do
   
   def muck_gems
-    ["#{installed_gems.join('","')}"]
+    ["muck-engine","muck-users","#{installed_gems.join('","')}"]
   end
   
   desc 'Translate app'
