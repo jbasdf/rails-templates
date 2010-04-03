@@ -68,6 +68,7 @@ if !install_everything
   install_file_uploads ||= install_muck_content
   install_geokit ||= install_muck_profiles
 
+  domain_name = ask("What domain name would you like for your application? (Yes I need it again. ie example.com)")
 end
 
 installed_gems = []
@@ -196,6 +197,9 @@ if install_muck_services || install_everything
   muck_services.js
   CODE
   
+  file_append 'Rakefile', <<-CODE
+  require 'muck_services/tasks'
+  CODE
 end
 
 #====================
@@ -237,6 +241,10 @@ if install_muck_oauth || install_everything
   # Fire Eagle api access: https://fireeagle.yahoo.net/developer/manage
   # fireeagle_oauth_key: "" 
   # fireeagle_oauth_secret: ""
+  CODE
+  
+  file_append 'Rakefile', <<-CODE
+  require 'muck_oauth/tasks'
   CODE
   
   installed_gems << 'muck-oauth'
@@ -714,10 +722,10 @@ puts "==========================================================================
 puts "SUCCESS!"
 puts "================================================================================"
 puts "To populate the database with feeds and defaults for raker run: "
-puts " rake muck:raker:db:populate"
+puts " rake muck:db:populate"
 puts ""
 puts "Or to populate the database with only the defaults and no feeds run: "
-puts "muck:raker:db:bootstrap_services"
+puts " rake muck:services:db:bootstrap_services"
 puts ""
 puts "Update existing default data with defaults specific to muck raker"
-puts "muck:raker:db:populate"
+puts " rake muck:services:db:populate "
