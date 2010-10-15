@@ -54,7 +54,8 @@ if !install_everything
   install_babelphish = true if yes?('Install Translations (babelphish - recommended)? (y/n)')
   install_geokit = true if yes?('Install Geokit? (y/n)')
   install_sms = true if yes?('Install SMS support? (y/n)')
-  install_muck_oauth = true if yes?('Install Muck Oauth? (y/n)')
+  #install_muck_oauth = true if yes?('Install Muck Oauth? (y/n)') # Depricated
+  install_muck_auth = true if yes?('Install Muck Auth? (y/n)')
   
   # Deal with dependencies
   install_muck_shares ||= install_muck_raker
@@ -98,7 +99,7 @@ if install_geokit
   
   CODE
   
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
+  file_inject 'config/secrets.yml', "default: &DEFAULT", <<-CODE
   # Geo Kit Configuration
   # TODO make sure the google_ajax_api_key from above can be used with geokit.  If it can then refactor and remove google_geo_key in favor of just using a single key.
   # Get google key from http://www.google.com/apis/maps/signup.html
@@ -108,7 +109,7 @@ if install_geokit
   yahoo_geo_key: ''
   CODE
   
-  puts 'Look in global_config.yml for the urls where you can aquire the keys for the yahoo and google key required to make geo coding work.'
+  puts 'Look in secrets.yml for the urls where you can aquire the keys for the yahoo and google key required to make geo coding work.'
 end
 
 #====================
@@ -154,9 +155,10 @@ end
 if install_muck_services || install_everything
   
   gem 'muck-services'
+  gem 'hpricot'
   gem "muck-feedbag", :require => 'feedbag'
 
-  file_inject 'config/secrets', "# -- Muck Engines Configuration", <<-CODE
+  file_inject 'config/secrets.yml', "default: &DEFAULT", <<-CODE
   # Amazon service settings.  These are only needed if you wish to let a user add their Amazon Wishlist as an identity service
   amazon_secret_access_key: ''        # Amazon access key.  Get this from your Amazon services account: http://aws.amazon.com/
   amazon_access_key_id: ''            # Amazon key id.  Get this from your Amazon services account: http://aws.amazon.com/
@@ -196,43 +198,65 @@ if install_muck_services || install_everything
 end
 
 #====================
+# muck auth
+#====================
+if install_muck_auth || install_everything
+  gem 'muck-auth'
+
+  file_inject 'config/secrets.yml', "default: &DEFAULT", <<-CODE
+  oauth_credentials:
+    twitter: # Twitter api access: http://www.twitter.com/apps 
+      key: ''
+      secret: ''
+    linked_in: # Linked In api access: https://www.linkedin.com/secure/developer
+      key: ""
+      secret: ""
+    facebook: # Use the Facebook Developer app, create an app and get the key and secret.
+      key: ''
+      secret: ''    
+  CODE
+  
+end
+
+#====================
 # muck oauth
 #====================
-if install_muck_oauth || install_everything
-  gem 'muck-oauth'
-    
-  file_inject 'config/secrets.yml', "# -- Muck Engines Configuration", <<-CODE
-  # Oauth
-  # Twitter api access: http://www.twitter.com/apps 
-  twitter_oauth_key: ""
-  twitter_oauth_secret: ""
-
-  # Google api access: http://code.google.com/apis/accounts/docs/RegistrationForWebAppsAuto.html#register
-  google_oauth_key: ""
-  google_oauth_secret: ""
-
-  # Yahoo api access: http://developer.yahoo.com/flickr/
-  # yahoo_oauth_key: ""
-  # yahoo_oauth_secret: ""
-
-  # Flick api access: http://www.flickr.com/services/apps/create/apply
-  # flickr_oauth_key: ""
-  # flickr_oauth_secret: ""
-
-  # Linked In api access: https://www.linkedin.com/secure/developer
-  linkedin_oauth_key: ""
-  linkedin_oauth_secret: ""
-
-  # Friendfeed api access: https://friendfeed.com/account/login?next=%2Fapi%2Fregister
-  friendfeed_oauth_key: ""
-  friendfeed_oauth_secret: ""  
-
-  # Fire Eagle api access: https://fireeagle.yahoo.net/developer/manage
-  # fireeagle_oauth_key: "" 
-  # fireeagle_oauth_secret: ""
-  CODE
-    
-  installed_gems << 'muck-oauth'
+# This gem has been depricated in favor of muck-auth
+# if install_muck_oauth || install_everything
+#   gem 'muck-oauth'
+#     
+#   file_inject 'config/secrets.yml', "default: &DEFAULT", <<-CODE
+#   # Oauth
+#   # Twitter api access: http://www.twitter.com/apps 
+#   twitter_oauth_key: ""
+#   twitter_oauth_secret: ""
+# 
+#   # Google api access: http://code.google.com/apis/accounts/docs/RegistrationForWebAppsAuto.html#register
+#   google_oauth_key: ""
+#   google_oauth_secret: ""
+# 
+#   # Yahoo api access: http://developer.yahoo.com/flickr/
+#   # yahoo_oauth_key: ""
+#   # yahoo_oauth_secret: ""
+# 
+#   # Flick api access: http://www.flickr.com/services/apps/create/apply
+#   # flickr_oauth_key: ""
+#   # flickr_oauth_secret: ""
+# 
+#   # Linked In api access: https://www.linkedin.com/secure/developer
+#   linkedin_oauth_key: ""
+#   linkedin_oauth_secret: ""
+# 
+#   # Friendfeed api access: https://friendfeed.com/account/login?next=%2Fapi%2Fregister
+#   friendfeed_oauth_key: ""
+#   friendfeed_oauth_secret: ""  
+# 
+#   # Fire Eagle api access: https://fireeagle.yahoo.net/developer/manage
+#   # fireeagle_oauth_key: "" 
+#   # fireeagle_oauth_secret: ""
+#   CODE
+#     
+#   installed_gems << 'muck-oauth'
 end
 
 #====================
@@ -531,7 +555,7 @@ end
 if install_muck_comments || install_everything
 
   # nested set is required for comments
-  gem "awesome_nested_set"
+  gem "nested_set"
   gem "sanitize"
   
   file 'app/models/comment.rb', <<-CODE

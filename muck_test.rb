@@ -14,104 +14,56 @@ def file_inject(file_name, sentinel, string, before_after=:after)
   end
 end
 
+run "rm -rf test/"
 
 # /////////////////////////////////////////////
-# Create test_helper.rb
+# Create spec_helper.rb
 #
-file 'test/test_helper.rb', <<-CODE
-
+file 'spec/spec_helper.rb', <<-CODE
 $:.reject! { |e| e.include? 'TextMate' }
-ENV["RAILS_ENV"] = "test"
-require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
-gem 'muck-engine'
+ENV["RAILS_ENV"] ||= 'test'
+require File.expand_path("../../config/environment", __FILE__)
+
 require 'muck_test_helper'
-require 'authlogic/test_case'
-require File.expand_path(File.dirname(__FILE__) + '/factories')
 
-class ActiveSupport::TestCase
-  include MuckTestMethods
-  include Authlogic::TestCase
-  self.use_transactional_fixtures = true
-  self.use_instantiated_fixtures  = false
-  
-  # For Selenium
-  # setup do |session|
-  #   session.host! "localhost:3001"
-  # end
+require File.join(File.dirname(__FILE__), 'spec', 'factories')
 
-end
 CODE
 
 # Create factories file
-file 'test/factories.rb', <<-CODE
+file 'spec/factories.rb', <<-CODE
 CODE
+
+
+# /////////////////////////////////////////////
+# Gems
+#
+file_append 'Gemfile', <<-CODE
+group :test, :development do
+  gem "rspec-rails"
+  gem "cucumber-rails"
+end
+
+group :test do
+  gem "autotest"
+  gem "capybara"
+  gem "shoulda"
+  gem "factory_girl"
+  gem "cucumber"
+  gem "rcov"
+  gem "rspec"
+  gem "database_cleaner"
+  gem "spork"
+  gem "launchy"
+end
+CODE
+
+generate("rspec")
 
 # /////////////////////////////////////////////
 # Cucumber
 #
 run "script/generate cucumber"
-
-file 'lib/tasks/cucumber.rake', <<-CODE
-$LOAD_PATH.unshift(RAILS_ROOT + '/vendor/plugins/cucumber/lib') if File.directory?(RAILS_ROOT + '/vendor/plugins/cucumber/lib')
- 
-begin
-  require 'cucumber/rake/task'
- 
-  Cucumber::Rake::Task.new(:features) do |t|
-    t.cucumber_opts = "--format pretty"
-  end
-  task :features => 'db:test:prepare'
-rescue LoadError
-  desc 'Cucumber rake task not available'
-  task :features do
-    abort 'Cucumber rake task is not available. Be sure to install cucumber as a gem or plugin'
-  end
-end
-CODE
-
-file 'features/support/env.rb', <<-CODE
-# Sets up the Rails environment for Cucumber
-ENV["RAILS_ENV"] = "test"
-require File.expand_path(File.dirname(__FILE__) + '/../../config/environment')
-require 'cucumber/rails/world'
-require 'cucumber/formatters/unicode' # Comment out this line if you don't want Cucumber Unicode support
-
-require 'database_cleaner'
-require 'database_cleaner/cucumber'
-DatabaseCleaner.strategy = :truncation
-
-Cucumber::Rails.use_transactional_fixtures
-
-require 'webrat/rails'
-
-# Comment out the next two lines if you're not using RSpec's matchers (should / should_not) in your steps.
-require 'cucumber/rails/rspec'
-require 'webrat/rspec-rails'
-
-Webrat.configure do |config|
-  config.mode = :rails
-end
-
-# Webrat.configure do |config|  
-#   config.mode = :selenium  
-#   config.application_environment = :test  
-#   config.application_framework = :rails  
-# end
-
-# To enable selenium:
-# 1. sudo gem install selenium-client
-# 2. uncomment Webrat.configure that contains :selenium and then comment out the one that contains :rails above
-# 3. set:  self.use_transactional_fixtures = false in test_helper.rb
-# 4. uncomment in test_helper.rb:
-      # setup do |session|
-      #   session.host! "localhost:3001"
-      # end
-# 5. Be sure to apply the patch mentioned in the viget article below found here: http://gist.github.com/141590
-      
-# References:
-# http://www.brynary.com/2009/4/6/switching-webrat-to-selenium-mode
-# http://www.viget.com/extend/getting-started-with-webrat-selenium-rails-and-firefox-3/
-CODE
 
 
 file 'features/step_definitions/common_steps.rb', <<-CODE

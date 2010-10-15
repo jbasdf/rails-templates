@@ -570,24 +570,6 @@ if RUBY_VERSION < '1.9'
   gem "ruby-debug"
 end
 
-group :test, :development do
-  gem "rspec-rails", ">=2.0.0"
-  gem "cucumber-rails"
-end
-
-group :test do
-  gem "autotest"
-  gem "capybara", ">= 0.3.9"
-  gem "shoulda"
-  gem "factory_girl"
-  gem "cucumber"
-  gem "rcov"
-  gem "rspec", ">=2.0.0"
-  gem "database_cleaner"
-  gem "spork"
-  gem "launchy"
-end
-
 CODE
 
 #==================== 
@@ -606,6 +588,11 @@ file "db/migrate/#{timestamp}_add_scope_index_to_slugs.rb",
   end
 end
 }
+
+#==================== 
+# Run bundler to install the required gems.
+#==================== 
+run('bundle install')
 
 # Note this is located between the friendly_id migration generation and the db:session:create because occasionally the 
 # script would run fast enough that the migrations would end up with the same timestamp.
