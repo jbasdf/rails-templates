@@ -89,12 +89,12 @@ if install_geokit
   CODE
   
   file_replace 'config/initializers/geokit_config.rb', "'REPLACE_WITH_YOUR_YAHOO_KEY'", <<-CODE
-  GlobalConfig.yahoo_geo_key # http://developer.yahoo.com/faq/index.html#appid
+  Secrets.yahoo_geo_key # http://developer.yahoo.com/faq/index.html#appid
   
   CODE
   
   file_replace 'config/initializers/geokit_config.rb', "'REPLACE_WITH_YOUR_GOOGLE_KEY'", <<-CODE
-  GlobalConfig.google_geo_key # http://www.google.com/apis/maps/signup.html  
+  Secrets.google_geo_key # http://www.google.com/apis/maps/signup.html  
   
   CODE
   
@@ -130,7 +130,7 @@ end
 # muck solr
 #====================
 if install_solr || install_everything
-  gem 'muck-solr', :lib => 'acts_as_solr'
+  gem 'muck-solr', :require => 'acts_as_solr'
   # TODO add code to install solr config files
   # TODO muck-solr requires muck_raker.rb to be installed in initializers.
   # that file should probably be setup by a rake task in muck-solr and be
@@ -142,11 +142,7 @@ end
 # muck raker
 #====================
 if install_muck_raker || install_everything
-  gem 'muck-raker', :lib => 'muck_raker'
-
-  file_append 'Rakefile', <<-CODE
-  require 'muck_raker/tasks'
-  CODE
+  gem 'muck-raker'
   
   installed_gems << 'muck-raker'
   
@@ -157,34 +153,34 @@ end
 #====================
 if install_muck_services || install_everything
   
-  gem 'muck-services', :lib => 'muck_services'
-  gem "muck-feedbag", :lib => 'feedbag'
-  gem "feedzirra"
-  gem "nokogiri"
-  gem "httparty"
-  gem "river"
-  
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
-  
-  # Services Configuration
-  inform_admin_of_global_feed: true   # If true then the 'admin_email' will recieve an email anytime a global feed (one that is not 
-                                      # attached to any object) is added.
-  # These settings apply to the toolbar which can be seen here: http://www.folksemantic.com/visits/53879
-  enable_services_comments: true      # Enables or disables comments in the frame that wraps content as a user browses recommendation results
-  enable_services_shares: true        # Enables or disables sharing in the frame that wraps content as a user browses recommendation results
+  gem 'muck-services'
+  gem "muck-feedbag", :require => 'feedbag'
 
+  file_inject 'config/secrets', "# -- Muck Engines Configuration", <<-CODE
   # Amazon service settings.  These are only needed if you wish to let a user add their Amazon Wishlist as an identity service
   amazon_secret_access_key: ''        # Amazon access key.  Get this from your Amazon services account: http://aws.amazon.com/
   amazon_access_key_id: ''            # Amazon key id.  Get this from your Amazon services account: http://aws.amazon.com/
-  amazon_associate_tag: 'amzfeeds-20' # Amazon associate tag.  Not required.  This will be added to amazon feeds if present.
-  ecs_to_rss_wishlist: "http://www.#{domain_name}/ecs_to_rss-wishlist.xslt" # xslt file that can transform xml from Amazon.  This file is found in /public/ecs_to_rss-wishlist.xslt and so changing #{domain_name} to you domain will make this work.
-
-  google_ajax_api_key: ''                 # get a Google ajax api key: http://code.google.com/apis/ajaxsearch/signup.html
-  google_ajax_referer: 'www.#{domain_name}'  # The website making requests to google.
-  show_google_search: true                # Determines whether or not a google search is displayed on the topic page
-  load_feeds_on_server: false             # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
-  combine_feeds_on_server: false          # Combines feeds loaded on the server
+  amazon_associate_tag: 'amzfeeds-20' # Amazon associate tag.  Not required.  This will be added to amazon feeds if present.  
   
+  google_ajax_api_key: ''                 # get a Google ajax api key: http://code.google.com/apis/ajaxsearch/signup.html
+  CODE
+  
+  file_append 'config/initializers/muck.rb', <<-CODE
+  MuckServices.configure do |config|    
+    # Services Configuration
+    config.inform_admin_of_global_feed = true   # If true then the 'admin_email' will recieve an email anytime a global feed (one that is not 
+                                                # attached to any object) is added.
+    # These settings apply to the toolbar which can be seen here: http://www.folksemantic.com/visits/53879
+    config.enable_services_comments = true      # Enables or disables comments in the frame that wraps content as a user browses recommendation results
+    config.enable_services_shares = true        # Enables or disables sharing in the frame that wraps content as a user browses recommendation results
+
+    config.ecs_to_rss_wishlist = "http://www.#{domain_name}/ecs_to_rss-wishlist.xslt" # xslt file that can transform xml from Amazon.  This file is found in /public/ecs_to_rss-wishlist.xslt and so changing #{domain_name} to you domain will make this work.
+
+    config.google_ajax_referer = 'www.#{domain_name}'  # The website making requests to google.
+    config.show_google_search = true                # Determines whether or not a google search is displayed on the topic page
+    config.load_feeds_on_server = false             # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
+    config.combine_feeds_on_server = false          # Combines feeds loaded on the server
+  end
   CODE
   
   file_insert 'app/views/layouts/global/_head.html.erb', "reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame", <<-CODE
@@ -197,22 +193,15 @@ if install_muck_services || install_everything
   muck_services.js
   CODE
   
-  file_append 'Rakefile', <<-CODE
-  require 'muck_services/tasks'
-  CODE
 end
 
 #====================
 # muck oauth
 #====================
 if install_muck_oauth || install_everything
-  gem 'muck-oauth', :lib => 'muck_oauth'
-  
-  file_append 'Rakefile', <<-CODE
-  require 'muck_oauth/tasks'
-  CODE
-  
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
+  gem 'muck-oauth'
+    
+  file_inject 'config/secrets.yml', "# -- Muck Engines Configuration", <<-CODE
   # Oauth
   # Twitter api access: http://www.twitter.com/apps 
   twitter_oauth_key: ""
@@ -242,11 +231,7 @@ if install_muck_oauth || install_everything
   # fireeagle_oauth_key: "" 
   # fireeagle_oauth_secret: ""
   CODE
-  
-  file_append 'Rakefile', <<-CODE
-  require 'muck_oauth/tasks'
-  CODE
-  
+    
   installed_gems << 'muck-oauth'
 end
 
@@ -254,21 +239,19 @@ end
 # muck blogs
 #====================
 if install_muck_blogs || install_everything
-  gem 'muck-blogs', :lib => 'muck_blogs'
-  
-  file_append 'Rakefile', <<-CODE
-  require 'muck_blogs/tasks'
-  CODE
-  
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
-  # Blogs Configuration
-  enable_post_activities: true    # If the activity system is installed then setting this to true will add an activity to the user's activity 
-                                  # feed each time they make a post.  If the activity system is not install then this value should be false.
+  gem 'muck-blogs'
+    
+  file_append 'config/initializers/muck.rb', <<-CODE
+  MuckBlogs.configure do |config|
+    # Blogs Configuration
+    enable_post_activities = true   # If the activity system is installed then setting this to true will add an activity to the user's activity 
+                                    # feed each time they make a post.  If the activity system is not install then this value should be false.
+  end
   CODE
 
   file 'app/models/blog.rb', <<-CODE
   class Blog < ActiveRecord::Base
-    acts_as_muck_blog
+    include MuckBlogs::Models::Blog
   end
   CODE
 
@@ -280,46 +263,39 @@ end
 # muck content engine
 #====================
 if install_muck_content || install_everything
-  gem 'muck-contents', :lib => 'muck_contents'
+  gem 'muck-contents'
   gem 'tiny_mce'
-  
-  file_append 'Rakefile', <<-CODE
-  require 'muck_contents/tasks'
-  CODE
-  
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
-  # Contents Configuration
-  git_repository: ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
-  content_git_repository: false       # Should be set to false as git integration is not currently working.
-  enable_auto_translations: false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
-  content_enable_solr: true           # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
-                                      # then set this value to false (but search will be disabled).
-  content_css: ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
-                                      # Note that Rails will typically generate a single all.css stylesheet.  Setting the stylesheets here let's 
-                                      # the site administrator control which css is present in the content editor and thus which css an end 
-                                      # user has access to to style their content.
-                                      
+    
+  file_append 'config/initializers/muck.rb', <<-CODE
+  MuckContents.configure do |config|
+    # Contents Configuration
+    git_repository: ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
+    content_git_repository: false       # Should be set to false as git integration is not currently working.
+    enable_auto_translations: false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
+    content_enable_solr: true           # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
+                                        # then set this value to false (but search will be disabled).
+    content_css: ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
+                                        # Note that Rails will typically generate a single all.css stylesheet.  Setting the stylesheets here let's 
+                                        # the site administrator control which css is present in the content editor and thus which css an end 
+                                        # user has access to to style their content.
+  end
   CODE
   
   file 'app/models/content.rb', <<-CODE
   class Content < ActiveRecord::Base
-    acts_as_muck_content(
-      :git_repository => GlobalConfig.content_git_repository,
-      :enable_auto_translations => GlobalConfig.enable_auto_translations,
-      :enable_solr => GlobalConfig.content_enable_solr
-    )
+    include MuckContents::Models::MuckContent
   end
   CODE
   
   file 'app/models/content_translation.rb', <<-CODE
   class ContentTranslation < ActiveRecord::Base
-    acts_as_muck_content_translation
+    include MuckContents::Models::MuckContentTranslation
   end
   CODE
   
   file 'app/models/content_permission.rb', <<-CODE
   class ContentPermission < ActiveRecord::Base
-    acts_as_muck_content_permission
+    include MuckContents::Models::MuckContentPermission
   end
   CODE
   
@@ -329,11 +305,7 @@ if install_muck_content || install_everything
   CODE
   
   file_inject 'config/routes.rb', "ActionController::Routing::Routes.draw do |map|", <<-CODE
-  map.resources :contents
-  CODE
-  
-  file_inject 'app/controllers/application_controller.rb', "class ApplicationController < ActionController::Base", <<-CODE
-  acts_as_muck_content_handler
+  resources :contents
   CODE
   
   installed_gems << 'muck-contents'
@@ -343,22 +315,18 @@ end
 # muck shares
 #====================
 if install_muck_shares || install_everything
-  gem 'muck-shares', :lib => 'muck_shares'
+  gem 'muck-shares'
   
   file 'app/models/share.rb', <<-CODE
   class Share < ActiveRecord::Base
-    acts_as_muck_share
+    include MuckShares::Models::Share
   end
   CODE
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
-  acts_as_muck_sharer
+  include MuckShares::Models::Sharer
   CODE
   
-  file_append 'Rakefile', <<-CODE
-  require 'muck_shares/tasks'
-  CODE
-
   installed_gems << 'muck-shares'
 end
 
@@ -366,29 +334,28 @@ end
 # muck profile engine
 #====================
 if install_muck_profiles || install_everything
-  gem 'muck-profiles', :lib => 'muck_profiles'
-  
-  file_append 'Rakefile', <<-CODE
-  require 'muck_profiles/tasks'
-  CODE
-  
+  gem 'muck-profiles'
+    
   file 'app/models/profile.rb', <<-CODE
   class Profile < ActiveRecord::Base
-    acts_as_muck_profile :enable_solr => true,
-                         :policy => { :public => [:login, :first_name, :last_name, :about],
-                                      :authenticated => [:location, :city, :state_id, :country_id, :language_id],
-                                      :friends => [:email],
-                                      :private => [] }
+    include MuckProfiles::Models::Profile
   end
   CODE
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
-  has_muck_profile
+  include MuckProfiles::Models::User
   CODE
   
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
-  # Profile Configuration
-  profile_enable_solr: false          # Determines whether or not solr is enabled for profiles.  This permits searching users based on their profile
+  file_append 'config/initializers/muck.rb', <<-CODE
+  MuckProfiles.configure do |config|
+    config.enable_solr = true           # This enables or disables acts as solr for profiles.
+    config.enable_guess_location = true # If true the profile system will attempt to determine the user's location via IP and populated with the location, lat and lon fields.
+    config.policy => { :public => [:login, :first_name, :last_name, :about],
+                       :authenticated => [:location, :city, :state_id, :country_id, :language_id],
+                       :friends => [:email],
+                       :private => [] }
+    
+  end
   CODE
   
   installed_gems << 'muck-profiles'
@@ -398,18 +365,21 @@ end
 # muck activity engine
 #====================
 if install_muck_activity || install_everything
-  gem 'muck-activities', :lib => 'muck_activities'
-  file_append 'Rakefile', <<-CODE
-  require 'muck_activities/tasks'
-  CODE
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
-  # Activity Configuration
-  enable_live_activity_updates: true  # Turns on polling inside the user's activity feed so they constantly get updates from the site
-  live_activity_update_interval: 60   # time between updates to live activity feed in seconds
-  enable_activity_comments: true      # Turn on comments in the activity feed
-  enable_activity_file_uploads: true  # Turn on file uploads in the activity feed.  Requires that uploader be installed.
-  enable_activity_image_uploads: true # Turn on image uploads in the activity feed.  Requires that uploader be installed.
-  enable_activity_video_sharing: true # Turn on video sharing in the activity feed.
+  gem 'muck-activities'
+
+  file_append 'config/initializers/muck.rb',  <<-CODE
+  MuckActivities.configure do |config|
+    config.enable_activity_comments = true     # Enable if you would like to enable comments for your project's activities feeds
+    config.enable_live_activity_updates = true # Turns on polling inside the user's activity feed so they constantly get updates from the site
+    config.live_activity_update_interval = 60  # Time between updates to live activity feed in seconds
+                                               # Note that this will poll the server every 60 seconds and so will increase server load and bandwidth usage.
+    config.enable_activity_shares = true       # Turn on shares in the activity feed
+
+    # You can also use the 'contribute' helper method to render a richer status update if you have uploader installed and configured:
+    config.enable_activity_file_uploads = true # Turn on file uploads in the activity feed.  Requires that uploader be installed.
+    config.enable_activity_image_uploads = true # Turn on image uploads in the activity feed.  Requires that uploader and muck_albums be installed.
+    config.enable_activity_video_sharing = true # Turn on video sharing in the activity feed.
+  end
   CODE
   
   file_insert 'app/views/layouts/global/_head.html.erb', "reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame", <<-CODE
@@ -418,7 +388,7 @@ if install_muck_activity || install_everything
   
   file 'app/models/activity.rb', <<-CODE
   class Activity < ActiveRecord::Base
-    acts_as_muck_activity
+    include MuckActivities::Models::Activity
   end
   CODE
   
@@ -433,27 +403,41 @@ end
 # muck friends engine
 #====================
 if install_muck_friends || install_everything
-  gem 'muck-friends', :lib => 'muck_friends'
-  
-  file_append 'Rakefile', <<-CODE
-  require 'muck_friends/tasks'
-  CODE
-  
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
-  # Friend Configuration
-  # The friend system provides a hybrid friend/follow model.  Either mode can be turned off or both can be enabled
-  # If only following is enabled then users will be provided the ability to follow, unfollow, and block
-  # If only friending is enabled then users will be provided a 'friend request' link and the ability to accept friend requests
-  # If both modes are are enabled then users will be able to follow other users.  A mutual follow results in 'friends'.  An unfollow 
-  # leaves the other party as just a follower.
-  # Note that at least one mode must be enabled. 
-  enable_following: true          # Turn on 'following'.  This is similar to the 'follow' functionality on Twitter in that it let's users watch one 
-                                  # another's activities without having explicit permission from the user.  A mutual follow essentially becomes a
-                                  # friendship.
-  enable_friending: false         # Turn on friend system.
-  enable_friend_activity: true    # If true then friend related activity will show up in the activity feed.  Requires muck-activities gem
+  gem 'muck-friends'
+    
+  file_append 'config/initializers/muck.rb',  <<-CODE
+  MuckFriends.configure do |config|
+    # Friend Configuration
+    # The friend system provides a hybrid friend/follow model.  Either mode can be turned off or both can be enabled
+    # If only following is enabled then users will be provided the ability to follow, unfollow, and block
+    # If only friending is enabled then users will be provided a 'friend request' link and the ability to accept friend requests
+    # If both modes are are enabled then users will be able to follow other users.  A mutual follow results in 'friends'.  An unfollow 
+    # leaves the other party as just a follower.
+    # Note that at least one mode must be enabled.
+    allow_following = true          # Turn on 'following'.  This is similar to the 'follow' functionality on Twitter in that it let's users watch one 
+                                    # another's activities without having explicit permission from the user.  A mutual follow essentially becomes a
+                                    # friendship.
+    enable_friending = true         # Turn on friend system.
+    enable_friend_activity = true   # If true then friend related activity will show up in the activity feed.  Requires muck-activities gem
+  end
   CODE
 
+  file 'app/models/friend.rb', <<-CODE
+  class Friend < ActiveRecord::Base
+    include MuckFriends::Models::Friend
+  end
+  CODE
+  
+  file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
+  include MuckFriends::Models::User
+  CODE
+  
+  file 'app/mailers/friend_mailer.rb',
+  %Q{class FriendMailer < ActionMailer::Base
+    include MuckFriends::Mailers::FriendMailer
+  end
+  }
+  
   installed_gems << 'muck-friends'
 end
 
@@ -461,12 +445,8 @@ end
 # cms lite
 #====================
 if install_cms_lite
-  gem 'cms-lite', :lib => 'cms_lite'
-  file_append 'Rakefile', <<-CODE
-  require 'cms_lite'
-  require 'cms_lite/tasks'
-  CODE
-  
+  gem 'cms-lite', :require => 'cms_lite'
+    
   installed_gems << 'cms-lite'
 end
 
@@ -475,17 +455,6 @@ end
 #====================
 if install_disguise || install_everything
   gem 'disguise'
-  
-  file_append 'Rakefile', <<-CODE
-  require 'disguise/tasks'
-  CODE
-    
-  file_inject 'config/global_config.yml', "# -- Muck Engines Configuration", <<-CODE
-  # Theme Configuration
-  themes_enabled: true          # Turns the theme engine on and off.  If false then only the views in the standard app directory will be used.
-  use_domain_for_themes: false  # If the disguise gem is installed it is possible to change the 'theme' or look of the site based on the current domain.
-                                # Themes can be set in the admin UI or determined at run time by the domain name.
-  CODE
   
   file 'app/controllers/admin/themes_controller.rb', <<-CODE
   class Admin::ThemesController < Admin::Disguise::ThemesController
@@ -502,12 +471,13 @@ if install_disguise || install_everything
   CODE
   
   initializer 'disguise.rb', <<-CODE
-  Disguise::Config.use_domain_for_themes = GlobalConfig.use_domain_for_themes
-  Disguise::Config.themes_enabled = GlobalConfig.themes_enabled
+  Disguise.configure do |config|
+    config.use_domain_for_themes = false  # If the disguise gem is installed it is possible to change the 'theme' or look of the site based on the current domain.
+                                          # Themes can be set in the admin UI or determined at run time by the domain name.
+    config.themes_enabled = true          # Turns the theme engine on and off.  If false then only the views in the standard app directory will be used.
 
-  # These options are also available to configure disguise.  In most cases the defaults should work fine.
-  Disguise::Config.theme_path = 'themes'
-  Disguise::Config.theme_full_base_path = File.join(RAILS_ROOT, Disguise.theme_path)
+    # These options are also available to configure disguise.  In most cases the defaults should work fine.
+    config.theme_full_base_path =  File.join(::Rails.root.to_s, 'themes') # Full path to the themes folder. The examples puts themes in a directory called 'themes' in the Rails app root.
   CODE
   
   rake('disguise:setup')
@@ -523,12 +493,7 @@ end
 if install_file_uploads || install_everything
   
   gem 'uploader'
-  
-  file_append 'Rakefile', <<-CODE
-  require 'uploader'
-  require 'uploader/tasks'
-  CODE
-  
+    
   initializer 's3_credentials.rb', <<-CODE
   # This keeps the developers from having to have the Amazon keys on their machines
   s3_file = "\#{RAILS_ROOT}/config/s3.yml"
@@ -546,26 +511,11 @@ if install_file_uploads || install_everything
   file 'app/models/upload.rb', <<-CODE
   class Upload < ActiveRecord::Base
   
-    acts_as_uploader  :enable_s3 => false,
-                      :has_attached_file => {
-                        :url     => "/system/:attachment/:id_partition/:style/:basename.:extension",
-                        :path    => ":rails_root/public/system/:attachment/:id_partition/:style/:basename.:extension",
-                        :styles  => { :icon => "30x30!", 
-                                      :thumb => "100>", 
-                                      :small => "150>", 
-                                      :medium => "300>", 
-                                      :large => "660>" },
-                        :default_url => "/images/profile_default.jpg",
-                        :storage => :s3,
-                        :s3_credentials => AMAZON_S3_CREDENTIALS,
-                        :bucket => "assets.\#{GlobalConfig.application_url}",
-                        :s3_host_alias => "assets.\#{GlobalConfig.application_url}",
-                        :convert_options => {
-                           :all => '-quality 80'
-                         }
-                      },
-                      :s3_path => ':id_partition/:style/:basename.:extension'
-  
+    include Uploader::Models::Upload
+    
+    validates_attachment_presence :local
+    validates_attachment_size :local, :less_than => 10.megabytes
+    
   end
   CODE
   
@@ -587,7 +537,7 @@ if install_muck_comments || install_everything
   file 'app/models/comment.rb', <<-CODE
   class Comment < ActiveRecord::Base
     
-    acts_as_muck_comment
+    include MuckComments::Models::MuckComment
     
     # TODO polish the add to activity for comment
     def after_create
@@ -614,7 +564,7 @@ if install_muck_comments || install_everything
     before_filter :login_required # require the user to be logged in to make a comment
     
     # Modify this method to change how permissions are checked to see if a user can comment.
-    # Each model that implements 'acts_as_muck_comment' can override can_comment? to 
+    # Each model that implements 'include MuckComments::Models::MuckComment' can override can_comment? to 
     # change how comment permissions are handled.
     def has_permission_to_comment(user, parent)
       parent.can_comment?(user)
@@ -622,13 +572,9 @@ if install_muck_comments || install_everything
     
   end
   CODE
-  
-  file_append 'Rakefile', <<-CODE
-    require 'muck_comments/tasks'
-  CODE
 
-  file_inject 'config/routes.rb', "map.root :controller => 'default', :action => 'index'", <<-CODE
-  map.resources :comments
+  file_inject 'config/routes.rb', "root :to => \"default#index\"", <<-CODE
+  resources :comments
   CODE
   
   installed_gems << 'muck-comments'
@@ -639,32 +585,28 @@ end
 #====================
 if install_muck_invites || install_everything
   
-  gem 'muck-invites', :lib => 'muck_invites'
+  gem 'muck-invites'
   
   file_insert 'app/views/layouts/global/_head.html.erb', "reset blueprint/liquid_screen.css jquery/jquery.fancybox.css styles frame", <<-CODE
   muck-invites
   CODE
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
-  acts_as_muck_inviter
+  include MuckInvites::Models::Inviter
   CODE
   
   file 'app/models/invite.rb', <<-CODE
   class Invite < ActiveRecord::Base
-    acts_as_muck_invite
+    include MuckInvites::Models::Invite
   end
   CODE
   
   file 'app/models/invitee.rb', <<-CODE
   class Invitee < ActiveRecord::Base
-    acts_as_muck_invitee
+    include MuckInvites::Models::Invitee
   end
   CODE
-  
-  file_append 'Rakefile', <<-CODE
-    require 'muck_invites/tasks'
-  CODE
-  
+    
   installed_gems << 'muck-invites'
   
 end
