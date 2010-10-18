@@ -257,7 +257,7 @@ end
 #   CODE
 #     
 #   installed_gems << 'muck-oauth'
-end
+# end
 
 #====================
 # muck blogs
