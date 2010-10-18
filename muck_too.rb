@@ -616,18 +616,18 @@ if install_muck_invites || install_everything
   CODE
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
-  include MuckInvites::Models::Inviter
+  include MuckInvites::Models::MuckInviter
   CODE
   
   file 'app/models/invite.rb', <<-CODE
   class Invite < ActiveRecord::Base
-    include MuckInvites::Models::Invite
+    include MuckInvites::Models::MuckInvite 
   end
   CODE
   
   file 'app/models/invitee.rb', <<-CODE
   class Invitee < ActiveRecord::Base
-    include MuckInvites::Models::Invitee
+    include MuckInvites::Models::MuckInvitee
   end
   CODE
     
