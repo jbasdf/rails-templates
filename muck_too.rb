@@ -260,6 +260,62 @@ end
 # end
 
 #====================
+# muck comments
+#====================
+if install_muck_comments || install_everything
+
+  # nested set is required for comments
+  gem "nested_set"
+  gem "sanitize"
+  gem "muck-comments", ">=3.0.2"
+  
+  file 'app/models/comment.rb', <<-CODE
+  class Comment < ActiveRecord::Base
+    
+    include MuckComments::Models::MuckComment
+    
+    # TODO polish the add to activity for comment
+    def after_create
+      # if !self.commentable.is_a?(Activity) # don't add comments to the activity feed that are comments on the items in the activity feed.
+      content = I18n.t('muck.comments.new_comment')
+      add_activity(self, self, self, 'comment', '', content)
+    end
+  
+    def self.between_users user1, user2
+      find(:all, {
+        :order => 'created_at asc',
+        :conditions => [
+          "(user_id=? and commentable_id=?) or (user_id=? and commentable_id=?) and commentable_type='User'",
+          user1.id, user2.id, user2.id, user1.id]
+          })
+    end
+
+  end
+  CODE
+
+  file 'app/controllers/comments_controller.rb', <<-CODE
+  class CommentsController < Muck::CommentsController
+    
+    before_filter :login_required # require the user to be logged in to make a comment
+    
+    # Modify this method to change how permissions are checked to see if a user can comment.
+    # Each model that implements 'include MuckComments::Models::MuckComment' can override can_comment? to 
+    # change how comment permissions are handled.
+    def has_permission_to_comment(user, parent)
+      parent.can_comment?(user)
+    end
+    
+  end
+  CODE
+
+  file_inject 'config/routes.rb', "root :to => \"default#index\"", <<-CODE
+  resources :comments
+  CODE
+  
+  installed_gems << 'muck-comments'
+end
+
+#====================
 # muck blogs
 #====================
 if install_muck_blogs || install_everything
@@ -293,15 +349,15 @@ if install_muck_content || install_everything
   file_append 'config/initializers/muck.rb', <<-CODE
   MuckContents.configure do |config|
     # Contents Configuration
-    git_repository: ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
-    content_git_repository: false       # Should be set to false as git integration is not currently working.
-    enable_auto_translations: false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
-    content_enable_solr: true           # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
-                                        # then set this value to false (but search will be disabled).
-    content_css: ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
-                                        # Note that Rails will typically generate a single all.css stylesheet.  Setting the stylesheets here let's 
-                                        # the site administrator control which css is present in the content editor and thus which css an end 
-                                        # user has access to to style their content.
+    git_repository = ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
+    content_git_repository = false       # Should be set to false as git integration is not currently working.
+    enable_auto_translations = false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
+    content_enable_solr = true           # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
+                                         # then set this value to false (but search will be disabled).
+    content_css = ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
+                                                                        # Note that Rails will typically generate a single all.css stylesheet.  Setting the stylesheets here let's 
+                                                                        # the site administrator control which css is present in the content editor and thus which css an end 
+                                                                        # user has access to to style their content.
   end
   CODE
   
@@ -336,25 +392,6 @@ if install_muck_content || install_everything
 end
 
 #====================
-# muck shares
-#====================
-if install_muck_shares || install_everything
-  gem 'muck-shares'
-  
-  file 'app/models/share.rb', <<-CODE
-  class Share < ActiveRecord::Base
-    include MuckShares::Models::Share
-  end
-  CODE
-  
-  file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
-  include MuckShares::Models::Sharer
-  CODE
-  
-  installed_gems << 'muck-shares'
-end
-
-#====================
 # muck profile engine
 #====================
 if install_muck_profiles || install_everything
@@ -362,19 +399,19 @@ if install_muck_profiles || install_everything
     
   file 'app/models/profile.rb', <<-CODE
   class Profile < ActiveRecord::Base
-    include MuckProfiles::Models::Profile
+    include MuckProfiles::Models::MuckProfile
   end
   CODE
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
-  include MuckProfiles::Models::User
+  include MuckProfiles::Models::MuckUser
   CODE
   
   file_append 'config/initializers/muck.rb', <<-CODE
   MuckProfiles.configure do |config|
     config.enable_solr = true           # This enables or disables acts as solr for profiles.
     config.enable_guess_location = true # If true the profile system will attempt to determine the user's location via IP and populated with the location, lat and lon fields.
-    config.policy => { :public => [:login, :first_name, :last_name, :about],
+    config.policy = { :public => [:login, :first_name, :last_name, :about],
                        :authenticated => [:location, :city, :state_id, :country_id, :language_id],
                        :friends => [:email],
                        :private => [] }
@@ -453,7 +490,7 @@ if install_muck_friends || install_everything
   CODE
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
-  include MuckFriends::Models::User
+  include MuckFriends::Models::MuckUser
   CODE
   
   file 'app/mailers/friend_mailer.rb',
@@ -548,60 +585,23 @@ if install_file_uploads || install_everything
   rake('uploader:sync')
 end
 
-
 #====================
-# muck comments
+# muck shares
 #====================
-if install_muck_comments || install_everything
-
-  # nested set is required for comments
-  gem "nested_set"
-  gem "sanitize"
+if install_muck_shares || install_everything
+  gem 'muck-shares'
   
-  file 'app/models/comment.rb', <<-CODE
-  class Comment < ActiveRecord::Base
-    
-    include MuckComments::Models::MuckComment
-    
-    # TODO polish the add to activity for comment
-    def after_create
-      # if !self.commentable.is_a?(Activity) # don't add comments to the activity feed that are comments on the items in the activity feed.
-      content = I18n.t('muck.comments.new_comment')
-      add_activity(self, self, self, 'comment', '', content)
-    end
-  
-    def self.between_users user1, user2
-      find(:all, {
-        :order => 'created_at asc',
-        :conditions => [
-          "(user_id=? and commentable_id=?) or (user_id=? and commentable_id=?) and commentable_type='User'",
-          user1.id, user2.id, user2.id, user1.id]
-          })
-    end
-
+  file 'app/models/share.rb', <<-CODE
+  class Share < ActiveRecord::Base
+    include MuckShares::Models::MuckShare
   end
   CODE
-
-  file 'app/controllers/comments_controller.rb', <<-CODE
-  class CommentsController < Muck::CommentsController
-    
-    before_filter :login_required # require the user to be logged in to make a comment
-    
-    # Modify this method to change how permissions are checked to see if a user can comment.
-    # Each model that implements 'include MuckComments::Models::MuckComment' can override can_comment? to 
-    # change how comment permissions are handled.
-    def has_permission_to_comment(user, parent)
-      parent.can_comment?(user)
-    end
-    
-  end
-  CODE
-
-  file_inject 'config/routes.rb', "root :to => \"default#index\"", <<-CODE
-  resources :comments
+  
+  file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
+  include MuckShares::Models::MuckSharer
   CODE
   
-  installed_gems << 'muck-comments'
+  installed_gems << 'muck-shares'
 end
 
 #====================
@@ -640,24 +640,14 @@ end
 # muck.rake
 #====================
 file 'lib/tasks/muck.rake', <<-CODE
-require 'rake'
-begin
-  require 'git'
-rescue LoadError
-  puts "git gem not installed.  If git functionality is required run 'sudo gem install git'"
-end
 require 'fileutils'
 
 namespace :muck do
-  
-  def muck_gems
-    ["muck-engine","muck-users","#{installed_gems.join('","')}"]
-  end
-  
+    
   desc 'Translate app'
   task :translate => :environment do
     puts 'translating'
-    system("babelphish -o -y #{RAILS_ROOT}/config/locales/en.yml")
+    system("babelphish -o -y #{::Rails.root.to_s}/config/locales/en.yml")
   end
 
 end
@@ -668,9 +658,9 @@ CODE
 #====================
 if install_tagging || install_everything
   gem 'acts-as-taggable-on'
-  file_inject('app/helpers/application_helper.rb', 'module ApplicationHelper', 'include TagsHelper')
+  file_inject('app/helpers/application_helper.rb', 'module ApplicationHelper', 'include ActsAsTaggableOn::TagsHelper')
   file_inject('app/models/user.rb', 'class User < ActiveRecord::Base', 'acts_as_tagger')
-  run "script/generate acts_as_taggable_on_migration"
+  run "rails generate acts_as_taggable_on:migration"
 end
 
 #====================
