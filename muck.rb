@@ -27,18 +27,41 @@ install_capistrano = false #true if yes?('Install capistrano? (y/n)')
 #====================
 git :init
 
-#====================
-# gems 
-#====================
-gem 'muck-engine', :require => 'muck_engine'
-gem 'muck-users'
-gem 'authlogic'
-gem 'will_paginate'
-gem 'bcrypt-ruby', :require => 'bcrypt', :version => '>=2.1.1'
-gem 'paperclip'
-gem 'friendly_id'
-gem 'hoptoad_notifier'
+#==================== 
+# Write Gemfile
+#==================== 
+file 'Gemfile', <<-CODE
+source 'http://rubygems.org'
+
+gem 'rails', '3.0.1'
+
+# Bundle edge Rails instead:
+# gem 'rails', :git => 'git://github.com/rails/rails.git'
+
+if RUBY_VERSION < '1.9'
+  gem "ruby-debug"
+end
+
+CODE
+
+gem 'mysql'
+
+gem "authlogic"
+gem "will_paginate"
+gem "bcrypt-ruby", ">=2.1.1", :require => "bcrypt"
+gem "paperclip"
+gem "friendly_id"
+gem "hoptoad_notifier"
 gem "recaptcha", :require => "recaptcha/rails"
+
+gem "muck-engine", ">=3.0.4"
+gem "muck-users", ">=3.0.4"
+
+#==================== 
+# Run bundler to install the required gems.
+#==================== 
+run('bundle install')
+
 
 #==================== 
 # Install and configure capistrano 
@@ -282,7 +305,6 @@ staging:
   password: 
   host: localhost
   encoding: utf8
-  socket: /var/lib/mysql/mysql.sock
 
 production:
   adapter: mysql
@@ -291,7 +313,6 @@ production:
   password: 
   host: localhost
   encoding: utf8
-  socket: /var/lib/mysql/mysql.sock
 }
 
 initializer 'caching.rb',
@@ -542,42 +563,12 @@ file_inject 'config/routes.rb', "::Application.routes.draw do", <<-CODE
 CODE
 
 #==================== 
-# Write Gemfile
-#==================== 
-file 'Gemfile', <<-CODE
-
-source 'http://rubygems.org'
-
-gem 'rails', '3.0.0'
-
-# Bundle edge Rails instead:
-# gem 'rails', :git => 'git://github.com/rails/rails.git'
-
-gem 'mysql'
-
-gem "authlogic"
-gem "will_paginate"
-gem "bcrypt-ruby", ">=2.1.1", :require => "bcrypt"
-gem "paperclip"
-gem "friendly_id"
-gem "hoptoad_notifier"
-gem "recaptcha", :require => "recaptcha/rails"
-
-gem "muck-engine"
-gem "muck-users"
-
-if RUBY_VERSION < '1.9'
-  gem "ruby-debug"
-end
-
-CODE
-
-#==================== 
 # General Setup
 #==================== 
-run "script/generate friendly_id"
+run "rails generate friendly_id"
 
-timestamp = (Time.now).utc.strftime("%Y%m%d%H%M%S") # HACK stole this from rails migration script
+# The extra '5' seconds is needed or else the migration from friendly id above and this migration will get the exact same timestamp.
+timestamp = (Time.now + 5).utc.strftime("%Y%m%d%H%M%S") # HACK stole this from rails migration script
 file "db/migrate/#{timestamp}_add_scope_index_to_slugs.rb", 
 %q{class AddScopeIndexToSlugs < ActiveRecord::Migration
   def self.up
@@ -588,11 +579,6 @@ file "db/migrate/#{timestamp}_add_scope_index_to_slugs.rb",
   end
 end
 }
-
-#==================== 
-# Run bundler to install the required gems.
-#==================== 
-run('bundle install')
 
 # Note this is located between the friendly_id migration generation and the db:session:create because occasionally the 
 # script would run fast enough that the migrations would end up with the same timestamp.
