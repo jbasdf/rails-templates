@@ -54,8 +54,8 @@ gem "friendly_id"
 gem "hoptoad_notifier"
 gem "recaptcha", :require => "recaptcha/rails"
 
-gem "muck-engine", ">=3.0.4"
-gem "muck-users", ">=3.0.4"
+gem "muck-engine", ">=3.0.5"
+gem "muck-users", ">=3.0.5"
 
 #==================== 
 # Run bundler to install the required gems.
@@ -316,7 +316,7 @@ production:
 }
 
 initializer 'caching.rb',
-%q{ActionController::Base.cache_store = :file_store, RAILS_ROOT + 'system/tmp/cache/'}
+%q{ActionController::Base.cache_store = :file_store, ::Rails.root + 'system/tmp/cache/'}
 
 initializer 'hoptoad.rb',
 %Q{HoptoadNotifier.configure do |config|
