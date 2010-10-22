@@ -396,7 +396,7 @@ file 'app/models/user.rb',
   end
 
   def display_name
-    h(self.login)
+    self.login
   end
   
 end
@@ -543,7 +543,7 @@ file 'config/locales/en.yml',
     subject_help: 'A simple statement indicating the nature of your feedback.'
     question: 'Your message/question:'
     question_help: 'Please include any comments you would like us to hear.'
-    contact_response_subject: 'Thanks for your inquiry from {{application_name}}!'
+    contact_response_subject: 'Thanks for your inquiry from %{application_name}!'
   general:
     thank_you_contact: 'Thank you for your message.  A member of our team will respond to you shortly.'
     send: 'Send'
