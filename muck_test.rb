@@ -14,7 +14,17 @@ def file_inject(file_name, sentinel, string, before_after=:after)
   end
 end
 
+def file_replace(file_name, find, replace)
+  log 'file_replace', file_name
+  gsub_file file_name, find, replace
+end
+
 run "rm -rf test/"
+
+# Modify test.rb
+file_replace 'config/environments/test.rb',
+  "config.action_dispatch.show_exceptions = true",
+  "config.action_dispatch.show_exceptions = true # Must be true to include the rack middleware require to generate missing page exceptions"
 
 # /////////////////////////////////////////////
 # Create spec_helper.rb
@@ -26,9 +36,9 @@ require File.expand_path("../../config/environment", __FILE__)
 
 require 'muck_test_helper'
 
-require File.join(File.dirname(__FILE__), 'spec', 'factories')
-
+require File.expand_path("../factories", __FILE__)
 CODE
+
 
 # Create factories file
 file 'spec/factories.rb', <<-CODE

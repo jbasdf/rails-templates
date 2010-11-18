@@ -267,15 +267,16 @@ if install_muck_comments || install_everything
   # nested set is required for comments
   gem "nested_set"
   gem "sanitize"
-  gem "muck-comments", ">=3.0.2"
+  gem "muck-comments", ">=3.1.0"
   
   file 'app/models/comment.rb', <<-CODE
   class Comment < ActiveRecord::Base
     
     include MuckComments::Models::MuckComment
+    after_create :add_activity
     
     # TODO polish the add to activity for comment
-    def after_create
+    def add_activity
       # if !self.commentable.is_a?(Activity) # don't add comments to the activity feed that are comments on the items in the activity feed.
       content = I18n.t('muck.comments.new_comment')
       add_activity(self, self, self, 'comment', '', content)
@@ -331,7 +332,7 @@ if install_muck_blogs || install_everything
 
   file 'app/models/blog.rb', <<-CODE
   class Blog < ActiveRecord::Base
-    include MuckBlogs::Models::Blog
+    include MuckBlogs::Models::MuckBlog
   end
   CODE
 
@@ -349,12 +350,13 @@ if install_muck_content || install_everything
   file_append 'config/initializers/muck.rb', <<-CODE
   MuckContents.configure do |config|
     # Contents Configuration
-    git_repository = ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
-    content_git_repository = false       # Should be set to false as git integration is not currently working.
-    enable_auto_translations = false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
-    content_enable_solr = true           # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
-                                         # then set this value to false (but search will be disabled).
-    content_css = ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
+    config.git_repository = ''                  # Not currently used.  Eventually this will be the path to a git repository that the content system uses to store revisions.
+    config.git_repository = false               # Should be set to false as git integration is not currently working.
+    config.enable_auto_translations = false     # If true then all content objects will automatically be translated into all languages supported by Google Translate
+    config.enable_sunspot = false               # This enables or disables sunspot for profiles. Only use acts_as_solr or sunspot not both. Sunspot does not include multicore support.
+    config.enable_solr = false                  # Enables solr for the content system.  If you are using solr then set this to true.  If you do not wish to setup and manage solr 
+                                                # then set this value to false (but search will be disabled).
+    config.content_css = ['/stylesheets/reset.css', '/stylesheets/styles.css'] # CSS files that should be fed into the tiny_mce content editor.  
                                                                         # Note that Rails will typically generate a single all.css stylesheet.  Setting the stylesheets here let's 
                                                                         # the site administrator control which css is present in the content editor and thus which css an end 
                                                                         # user has access to to style their content.
@@ -449,7 +451,7 @@ if install_muck_activity || install_everything
   
   file 'app/models/activity.rb', <<-CODE
   class Activity < ActiveRecord::Base
-    include MuckActivities::Models::Activity
+    include MuckActivities::Models::MuckActivity
   end
   CODE
   
@@ -485,7 +487,7 @@ if install_muck_friends || install_everything
 
   file 'app/models/friend.rb', <<-CODE
   class Friend < ActiveRecord::Base
-    include MuckFriends::Models::Friend
+    include MuckFriends::Models::MuckFriend
   end
   CODE
   

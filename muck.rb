@@ -549,6 +549,17 @@ file 'config/locales/en.yml',
     send: 'Send'
 }
 
+
+#==================== 
+# Don't include root in json output
+#====================
+file_append 'config/initializers/muck.rb', <<-CODE
+if defined?(ActiveRecord)
+  # Don't Include Active Record class name as root for JSON serialized output.
+  ActiveRecord::Base.include_root_in_json = false
+end
+CODE
+
 #==================== 
 # Build routes file
 #====================
