@@ -54,8 +54,9 @@ gem "friendly_id"
 gem "hoptoad_notifier"
 gem "recaptcha", :require => "recaptcha/rails"
 
-gem "muck-engine", ">=3.0.5"
-gem "muck-users", ">=3.0.5"
+gem "muck-engine", ">=3.2.0"
+gem "muck-users", ">=3.1.0"
+gem "muck-resources", ">=3.0.0"
 
 #==================== 
 # Run bundler to install the required gems.
