@@ -461,7 +461,7 @@ file 'app/controllers/default_controller.rb',
         body << "#{k}: #{v}"
       end
     end
-    BasicMailer.deliver_mail(:subject => I18n.t("contact.contact_response_subject", :application_name => MuckEngine.configuration.application_name), :body=>body.join("\n"))
+    BasicMailer.mail_from_params(:subject => I18n.t("contact.contact_response_subject", :application_name => MuckEngine.configuration.application_name), :body=>body.join("\n"))
     flash[:notice] = I18n.t('general.thank_you_contact')
     redirect_to contact_url    
   end
