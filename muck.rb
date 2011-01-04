@@ -488,38 +488,40 @@ file 'app/views/default/index.html.erb',
 file 'app/views/default/contact.html.erb',
 %q{<div id="contact">
 
+  <%= output_errors('', {:class => 'help-box'}) %>
+  
 	<h2><%= I18n.t('contact.contact_us') %></h2>
 
 	<% form_tag('/contact', :id => "contact_form") do -%>
 	
 	  <div class="row clear">
-	    <label for="form_name"><%= I18n.t('contact.name') %></label>
-	    <div class="formHelp"><%= I18n.t('contact.name_help') %></div>
-	    <input type="text" id="form_name" name="name" />
+	    <label for="name"><%= I18n.t('contact.name') %></label>
+	    <div class="form-help"><%= I18n.t('contact.name_help') %></div>
+	    <input type="text" id="name" name="name" />
 	  </div>
 
 	  <div class="row clear">
-	    <label for="form_phone"><%= I18n.t('contact.phone') %></label>
-			<div class="formHelp"><%= I18n.t('contact.phone_help') %></div>
-	    <input type="text" id="form_phone" name="phone" />
+	    <label for="phone"><%= I18n.t('contact.phone') %></label>
+			<div class="form-help"><%= I18n.t('contact.phone_help') %></div>
+	    <input type="text" id="phone" name="phone" />
 	  </div>
 
 	  <div class="row clear">
-	    <label for="form_email"><%= I18n.t('contact.email') %></label>
-			<div class="formHelp"><%= I18n.t('contact.email_help') %></div>
-	    <input type="text" id="form_email" name="email" />
+	    <label for="email"><%= I18n.t('contact.email') %></label>
+			<div class="form-help"><%= I18n.t('contact.email_help') %></div>
+	    <input type="text" id="email" name="email" />
 	  </div>
 
 	  <div class="row clear">
-	    <label for="form_message"><%= I18n.t('contact.subject') %></label>
-			<div class="formHelp"><%= I18n.t('contact.subject_help') %></div>
-	    <input type="text" id="form_email" name="email" />
+	    <label for="subject"><%= I18n.t('contact.subject') %></label>
+			<div class="form-help"><%= I18n.t('contact.subject_help') %></div>
+	    <input type="text" id="subject" name="email" />
 	  </div>
 	
 	  <div class="row clear">
-	    <label for="form_message"><%= I18n.t('contact.question') %></label>
-	    <div class="formHelp"><%= I18n.t('contact.question_help') %></div>
-			<textarea id="form_message" name="message"></textarea>
+	    <label for="message"><%= I18n.t('contact.question') %></label>
+	    <div class="form-help"><%= I18n.t('contact.question_help') %></div>
+			<textarea id="message" name="message"></textarea>
 	  </div>
 
 	  <input type="submit" value="<%= I18n.t('general.send') %>" class="button"/>
