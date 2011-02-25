@@ -216,6 +216,16 @@ if install_muck_auth || install_everything
       secret: ''    
   CODE
   
+  file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
+  include MuckAuth::Models::MuckUser
+  CODE
+  
+  file 'app/models/authentication.rb', <<-CODE
+  class Authentication < ActiveRecord::Base
+    include MuckAuth::Models::MuckAuthentication
+  end
+  CODE
+  
 end
 
 #====================
