@@ -225,9 +225,9 @@ file 'app/views/layouts/global/_head.html.erb',
   <script src="/javascripts/jquery/jquery.js" type="text/javascript"></script>
   <script src="/javascripts/jquery/jquery-ui-1.8.4.custom.min.js" type="text/javascript"></script>
 <% else -%>
-  <%= google_load_jquery_ui_css(http_protocol, 'smoothness', '1.8.4') %>
-  <%= google_load_jquery(http_protocol, '1.4.2') %>
-  <%= google_load_jquery_ui(http_protocol, '1.8.4') %>
+  <%= google_load_jquery_ui_css(http_protocol, 'smoothness', '1.8.10') %>
+  <%= google_load_jquery(http_protocol, '1.5.1') %>
+  <%= google_load_jquery_ui(http_protocol, '1.8.10') %>
 <% end -%>
 <%= stylesheet_link_tag %W{ reset styles blueprint/screen.css default }, :cache => true %>
 <%= javascript_include_tag %w{

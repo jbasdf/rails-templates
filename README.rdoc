@@ -20,4 +20,4 @@ If you build your own layout be sure to include the following script in your lay
   </script>
 
 
-Copyright (c) 2009-2010 Justin Ball, released under the MIT license
+Copyright (c) 2009-2011 Justin Ball, released under the MIT license
