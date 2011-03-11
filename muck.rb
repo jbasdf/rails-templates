@@ -236,6 +236,7 @@ file 'app/views/layouts/global/_head.html.erb',
   jquery/jquery.tips.js
   jquery/jquery.easing.js
   jquery/jquery.fancybox.js
+  rails.js
   muck.js
   application.js }, :cache => 'all_js_cached' %>
 <%= javascript_tag %[const AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
