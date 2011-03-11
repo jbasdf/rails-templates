@@ -2,13 +2,13 @@ Muck
 ==========
 
 The easiest way to get started with muck is to generate your application using a template:
-  $ rails new <your-app> -m http://github.com/jbasdf/rails-templates/raw/master/muck.rb
+  $ rails new <your-app> -m https://github.com/jbasdf/rails-templates/raw/master/muck.rb
 
 Add optional functionality with the following command:
-  $ rake rails:template LOCATION=http://github.com/jbasdf/rails-templates/raw/master/muck_too.rb
+  $ rake rails:template LOCATION=https://github.com/jbasdf/rails-templates/raw/master/muck_too.rb
 
 Add testing frameworks and macros:
-  $ rake rails:template LOCATION=http://github.com/jbasdf/rails-templates/raw/master/muck_test.rb
+  $ rake rails:template LOCATION=https://github.com/jbasdf/rails-templates/raw/master/muck_test.rb
     
 Layout
 =======
