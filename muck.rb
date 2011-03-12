@@ -53,6 +53,7 @@ gem "paperclip"
 gem "friendly_id"
 gem "hoptoad_notifier"
 gem "recaptcha", :require => "recaptcha/rails"
+gem 'jquery-rails', '>= 0.2.6'
 
 gem "muck-engine", ">=3.2.0"
 gem "muck-users", ">=3.1.0"
@@ -634,6 +635,11 @@ run 'rm public/images/rails.png'
 #====================
 run "rm public/javascripts/jquery.js"
 run "rm public/javascripts/jquery-ui.js"
+
+#==================== 
+# Change to the jquery rails.js file
+#====================
+run "rails generate jquery:install"
 
 #==================== 
 # Setup git
