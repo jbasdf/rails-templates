@@ -27,6 +27,12 @@ file_replace 'config/environments/test.rb',
   "config.action_dispatch.show_exceptions = true # Must be true to include the rack middleware require to generate missing page exceptions"
 
 # /////////////////////////////////////////////
+# Create .rspec file
+file '.rspec', <<-CODE
+--drb
+CODE
+	
+# /////////////////////////////////////////////
 # Create spec_helper.rb
 #
 file 'spec/spec_helper.rb', <<-CODE

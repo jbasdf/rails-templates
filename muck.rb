@@ -47,7 +47,7 @@ CODE
 gem 'mysql'
 
 gem "authlogic"
-gem "will_paginate"
+gem "will_paginate", "~> 3.0.beta"
 gem "bcrypt-ruby", ">=2.1.1", :require => "bcrypt"
 gem "paperclip"
 gem "friendly_id"
