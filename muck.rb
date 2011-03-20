@@ -56,9 +56,9 @@ gem "recaptcha", :require => "recaptcha/rails"
 gem 'jquery-rails', '>= 0.2.6'
 gem "jammit"
 
-gem "muck-engine", ">=3.2.0"
-gem "muck-users", ">=3.1.0"
-gem "muck-resources", ">=3.0.0"
+gem "muck-engine", ">=3.3.1"
+gem "muck-users", ">=3.1.26"
+gem "muck-resources", ">=3.1.3"
 
 #==================== 
 # Run bundler to install the required gems.
