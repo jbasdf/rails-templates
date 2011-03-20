@@ -15,9 +15,7 @@ Layout
 The muck template will build your basic application and construct all the needed files and configuration.
 
 If you build your own layout be sure to include the following script in your layout or the javascript in the system won't work:
-  <script type="text/javascript" language="JavaScript">
-    <%= yield :javascript %>
-  </script>
+  <%= yield :javascript %>
 
 
 Copyright (c) 2009-2011 Justin Ball, released under the MIT license

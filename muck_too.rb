@@ -195,6 +195,14 @@ if install_muck_services || install_everything
   muck_services.js
   CODE
   
+  file_inject 'config/assets.yml', '- public/stylesheets/jquery/jquery.fancybox.css', <<-CODE
+  - public/stylesheets/muck-services.css
+  CODE
+  
+  file_inject 'config/assets.yml', '- public/javascripts/muck.js', <<-CODE
+  - public/javascripts/muck_services.js
+  CODE
+  
 end
 
 #====================
@@ -465,9 +473,13 @@ if install_muck_activity || install_everything
   end
   CODE
   
-  # file_inject 'app/views/layouts/global/_head.html.erb', "muck.js", <<-CODE
-  # muck_activities.js
+  # file_inject 'config/assets.yml', '- public/javascripts/muck.js', <<-CODE
+  # - public/javascripts/muck_activities.js
   # CODE
+  
+  file_inject 'config/assets.yml', '- public/stylesheets/jquery/jquery.fancybox.css', <<-CODE
+  - public/stylesheets/muck-activities.css
+  CODE
   
   installed_gems << 'muck-activities'
 end
@@ -629,6 +641,10 @@ if install_muck_invites || install_everything
   
   file_inject 'app/models/user.rb', 'class User < ActiveRecord::Base', <<-CODE
   include MuckInvites::Models::MuckInviter
+  CODE
+  
+  file_inject 'config/assets.yml', '- public/stylesheets/jquery/jquery.fancybox.css', <<-CODE
+  - public/stylesheets/muck-invites.css
   CODE
   
   file 'app/models/invite.rb', <<-CODE

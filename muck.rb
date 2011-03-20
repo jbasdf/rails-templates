@@ -33,7 +33,7 @@ git :init
 file 'Gemfile', <<-CODE
 source 'http://rubygems.org'
 
-gem 'rails', '3.0.1'
+gem 'rails', '3.0.5'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -54,6 +54,7 @@ gem "friendly_id"
 gem "hoptoad_notifier"
 gem "recaptcha", :require => "recaptcha/rails"
 gem 'jquery-rails', '>= 0.2.6'
+gem "jammit"
 
 gem "muck-engine", ">=3.2.0"
 gem "muck-users", ">=3.1.0"
@@ -189,8 +190,11 @@ end
 }
 
 file 'app/views/layouts/default.html.erb',
-%q{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+%q{<!doctype html>
+  <!--[if lt IE 7 ]> <html class="no-js ie6" lang="en"> <![endif]-->
+  <!--[if IE 7 ]>    <html class="no-js ie7" lang="en"> <![endif]-->
+  <!--[if IE 8 ]>    <html class="no-js ie8" lang="en"> <![endif]-->
+  <!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
   <%= render :partial => 'layouts/global/head' %>
 </head>
@@ -204,44 +208,65 @@ file 'app/views/layouts/default.html.erb',
     </div>
     <%= render :partial => 'layouts/global/footer' %>
   </div>
-  <script type="text/javascript" language="JavaScript">
   <%= yield :javascript %>
-  </script>
   <%= render :partial => 'layouts/global/google_analytics' %>
 </body>
 </html>}
 
 file 'app/views/layouts/global/_head.html.erb',
 %q{<title><%= @page_title || MuckEngine.configuration.application_name %></title>
-<meta http-equiv="content-type" content="text/xhtml; charset=utf-8" />
-<meta http-equiv="imagetoolbar" content="no" />
-<meta name="distribution" content="all" />
-<meta name="robots" content="all" />	
-<meta name="resource-type" content="document" />
-<meta name="MSSmartTagsPreventParsing" content="true" />
-<%= stylesheet_link_tag 'blueprint/print.css', :media => "print" %>
-<!--[if IE]><link rel="stylesheet" href="/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
-<% if MuckEngine.configuration.local_jquery -%>
-  <link rel="stylesheet" href="/stylesheets/jquery/smoothness/jquery-ui-1.8.4.custom.css" type="text/css" />
-  <script src="/javascripts/jquery/jquery.js" type="text/javascript"></script>
-  <script src="/javascripts/jquery/jquery-ui-1.8.4.custom.min.js" type="text/javascript"></script>
-<% else -%>
-  <%= google_load_jquery_ui_css(http_protocol, 'smoothness', '1.8.10') %>
-  <%= google_load_jquery(http_protocol, '1.5.1') %>
-  <%= google_load_jquery_ui(http_protocol, '1.8.10') %>
-<% end -%>
-<%= stylesheet_link_tag %W{ reset styles blueprint/screen.css default }, :cache => true %>
-<%= javascript_include_tag %w{
-  jquery/jquery.form.js
-  jquery/jquery.jgrowl.js
-  jquery/jquery.tips.js
-  jquery/jquery.easing.js
-  jquery/jquery.fancybox.js
-  rails.js
-  muck.js
-  application.js }, :cache => 'all_js_cached' %>
-<%= javascript_tag %[const AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
-<%= yield :head -%>}
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta http-equiv="imagetoolbar" content="no" />
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="distribution" content="all" />
+  <meta name="robots" content="all" />
+  <%= include_stylesheets :site %>
+  <%= include_javascripts :site %>
+  <%= javascript_tag %[const AUTH_TOKEN = #{form_authenticity_token.inspect};] if protect_against_forgery? %>
+  <%= yield :head -%>
+  <%= csrf_meta_tag %>}
+
+file 'config/assets.yml',
+%q{embed_assets: datauri # on off datauri
+allow_debugging: on
+javascript_compressor: closure
+
+javascripts:
+  site:
+    - public/javascripts/jquery/jquery-1.5.1.js
+    - public/javascripts/jquery/jquery-ui-1.8.11.custom.js
+    - public/javascripts/jquery/jquery.form.js
+    - public/javascripts/jquery/jquery.tips.js
+    - public/javascripts/jquery/jquery.cookie.js
+    - public/javascripts/jquery/jquery.easing.js
+    - public/javascripts/jquery/jquery.fancybox.js
+    - public/javascripts/rails.js
+    - public/javascripts/muck.js
+    - public/javascripts/application.js
+  admin:
+    - public/javascripts/jquery/jquery-1.5.1.js
+    - public/javascripts/jquery/jquery-ui-1.8.11.custom.js
+    - public/javascripts/jquery/jquery.form.js
+    - public/javascripts/jquery/jquery.tips.js
+    - public/javascripts/jquery/jquery.cookie.js
+    - public/javascripts/jquery/jquery.easing.js
+    - public/javascripts/jquery/jquery.fancybox.js
+    - public/javascripts/rails.js
+    - public/javascripts/muck.js
+    - public/javascripts/muck_admin.js
+stylesheets:
+  site:
+    - public/stylesheets/jquery/smoothness/jquery-ui-1.8.11.custom.css
+    - public/stylesheets/jquery/jquery.fancybox.css
+    - public/stylesheets/default.css
+  admin:
+    - public/stylesheets/jquery/smoothness/jquery-ui-1.8.11.custom.css
+    - public/stylesheets/jquery/jquery.fancybox.css
+    - public/stylesheets/admin.css
+}
 
 file 'app/views/layouts/global/_header.html.erb',
 %q{<div class="block" id="header">
@@ -707,6 +732,7 @@ git :commit => "-a -m 'Initial commit'"
 puts "================================================================================"
 puts "SUCCESS!"
 puts "Search for 'TODO' to find specific items that need to be configured"
+puts "Muck uses jammit to package css and javascript files. Be sure to run 'jammit' before you deploy include it in your deploy process."
 puts "Next steps:"
 puts "1. Install other muck functionality:"
 puts "   Run rake rails:template LOCATION=http://github.com/jbasdf/rails-templates/raw/master/muck_too.rb"
