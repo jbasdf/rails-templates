@@ -263,6 +263,7 @@ stylesheets:
     - public/stylesheets/jquery/jquery.fancybox.css
     - public/stylesheets/default.css
   admin:
+    - public/stylesheets/blueprint/screen.css
     - public/stylesheets/jquery/smoothness/jquery-ui-1.8.11.custom.css
     - public/stylesheets/jquery/jquery.fancybox.css
     - public/stylesheets/admin.css
