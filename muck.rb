@@ -489,11 +489,23 @@ file 'app/controllers/default_controller.rb',
         body << "#{k}: #{v}"
       end
     end
-    BasicMailer.mail_from_params(:subject => I18n.t("contact.contact_response_subject", :application_name => MuckEngine.configuration.application_name), :body=>body.join("\n")).deliver
-    flash[:notice] = I18n.t('general.thank_you_contact')
-    redirect_to contact_url    
+    errors = []
+    errors << "your name" if params[:name].blank?
+    errors << "your email" if params[:email].blank?
+    errors << "a subject" if params[:subject].blank?
+    errors << "a message" if params[:message].blank?
+      
+    if errors.blank?
+      BasicMailer.mail_from_params(:subject => I18n.t("contact.contact_response_subject", :application_name => MuckEngine.configuration.application_name), :body=>body.join("\n")).deliver
+      flash[:notice] = I18n.t('general.thank_you_contact')
+      redirect_to contact_url
+    else
+      errors.unshift("Please provide")
+      flash[:error] = errors.to_sentence
+      render
+    end
   end
-
+  
   def sitemap
     respond_to do |format|
       format.html { render }
