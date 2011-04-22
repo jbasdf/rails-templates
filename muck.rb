@@ -555,7 +555,7 @@ file 'app/views/default/contact.html.erb',
 	  <div class="row clear">
 	    <label for="subject"><%= I18n.t('contact.subject') %></label>
 			<div class="form-help"><%= I18n.t('contact.subject_help') %></div>
-	    <input type="text" id="subject" name="email" />
+	    <input type="text" id="subject" name="subject" />
 	  </div>
 	
 	  <div class="row clear">
