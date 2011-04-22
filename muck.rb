@@ -526,8 +526,8 @@ file 'app/views/default/index.html.erb',
 
 
 file 'app/views/default/contact.html.erb',
-%q{<div id="contact">
-
+%q{<div id="contact" class="common-form">
+  
   <%= output_errors('', {:class => 'help-box'}) %>
   
 	<h2><%= I18n.t('contact.contact_us') %></h2>
@@ -535,33 +535,33 @@ file 'app/views/default/contact.html.erb',
 	<% form_tag('/contact', :id => "contact_form") do -%>
 	
 	  <div class="row clear">
-	    <label for="name"><%= I18n.t('contact.name') %></label>
+	    <%= label_tag 'name', I18n.t('contact.name') %>
 	    <div class="form-help"><%= I18n.t('contact.name_help') %></div>
-	    <input type="text" id="name" name="name" />
+	    <%= text_field_tag 'name', params[:name] %>
 	  </div>
 
 	  <div class="row clear">
-	    <label for="phone"><%= I18n.t('contact.phone') %></label>
+	    <%= label_tag 'phone', I18n.t('contact.phone') %>
 			<div class="form-help"><%= I18n.t('contact.phone_help') %></div>
-	    <input type="text" id="phone" name="phone" />
+			<%= text_field_tag 'phone', params[:phone] %>
 	  </div>
 
 	  <div class="row clear">
-	    <label for="email"><%= I18n.t('contact.email') %></label>
+	    <%= label_tag 'email', I18n.t('contact.email') %>
 			<div class="form-help"><%= I18n.t('contact.email_help') %></div>
-	    <input type="text" id="email" name="email" />
+	    <%= text_field_tag 'email', params[:email] %>
 	  </div>
 
 	  <div class="row clear">
-	    <label for="subject"><%= I18n.t('contact.subject') %></label>
+	    <%= label_tag 'subject', I18n.t('contact.subject') %>
 			<div class="form-help"><%= I18n.t('contact.subject_help') %></div>
-	    <input type="text" id="subject" name="subject" />
+			<%= text_field_tag 'subject', params[:subject] %>
 	  </div>
 	
 	  <div class="row clear">
-	    <label for="message"><%= I18n.t('contact.question') %></label>
+	    <%= label_tag 'message', I18n.t('contact.question') %>
 	    <div class="form-help"><%= I18n.t('contact.question_help') %></div>
-			<textarea id="message" name="message"></textarea>
+	    <%= text_area_tag 'message', params[:message] %>
 	  </div>
 
 	  <input type="submit" value="<%= I18n.t('general.send') %>" class="button"/>
