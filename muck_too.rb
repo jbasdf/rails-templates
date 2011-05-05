@@ -176,8 +176,6 @@ if install_muck_services || install_everything
     config.enable_services_comments = true      # Enables or disables comments in the frame that wraps content as a user browses recommendation results
     config.enable_services_shares = true        # Enables or disables sharing in the frame that wraps content as a user browses recommendation results
 
-    config.ecs_to_rss_wishlist = "http://www.#{domain_name}/ecs_to_rss-wishlist.xslt" # xslt file that can transform xml from Amazon.  This file is found in /public/ecs_to_rss-wishlist.xslt and so changing #{domain_name} to you domain will make this work.
-
     config.google_ajax_referer = 'www.#{domain_name}'  # The website making requests to google.
     config.show_google_search = true                # Determines whether or not a google search is displayed on the topic page
     config.load_feeds_on_server = false             # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
@@ -563,6 +561,7 @@ if install_disguise || install_everything
 
     # These options are also available to configure disguise.  In most cases the defaults should work fine.
     config.theme_full_base_path =  File.join(::Rails.root.to_s, 'themes') # Full path to the themes folder. The examples puts themes in a directory called 'themes' in the Rails app root.
+  end
   CODE
   
   rake('disguise:setup')
