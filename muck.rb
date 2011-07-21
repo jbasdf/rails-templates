@@ -348,8 +348,10 @@ initializer 'caching.rb',
 %q{ActionController::Base.cache_store = :file_store, ::Rails.root + 'system/tmp/cache/'}
 
 initializer 'hoptoad.rb',
-%Q{HoptoadNotifier.configure do |config|
-  config.api_key = Secrets.hoptoad_key
+%Q{if !Secrets.hoptoad_key.blank?
+    HoptoadNotifier.configure do |config|
+    config.api_key = Secrets.hoptoad_key
+  end
 end  
 }
 

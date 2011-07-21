@@ -425,10 +425,14 @@ if install_muck_profiles || install_everything
   include MuckProfiles::Models::MuckUser
   CODE
   
+  
+  enable_guess_location = install_geokit ? 'true' : 'false'
+  enable_solr = install_solr ? 'true' : 'false'
+  
   file_append 'config/initializers/muck.rb', <<-CODE
   MuckProfiles.configure do |config|
-    config.enable_solr = true           # This enables or disables acts as solr for profiles.
-    config.enable_guess_location = true # If true the profile system will attempt to determine the user's location via IP and populated with the location, lat and lon fields.
+    config.enable_solr = #{enable_solr}           # This enables or disables acts as solr for profiles.
+    config.enable_guess_location = #{enable_guess_location} # If true the profile system will attempt to determine the user's location via IP and populated with the location, lat and lon fields.
     config.policy = { :public => [:login, :first_name, :last_name, :about],
                        :authenticated => [:location, :city, :state_id, :country_id, :language_id],
                        :friends => [:email],
