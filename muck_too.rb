@@ -67,7 +67,7 @@ if !install_everything
   install_tagging ||= install_muck_content
   install_babelphish ||= install_muck_content
   install_file_uploads ||= install_muck_content
-  install_geokit ||= install_muck_profiles
+  #install_geokit ||= install_muck_profiles
 
   domain_name = ask("What domain name would you like for your application? (Yes I need it again. ie example.com)")
 end
@@ -210,7 +210,7 @@ if install_muck_auth || install_everything
   gem 'muck-auth'
 
   file_inject 'config/secrets.yml', "default: &DEFAULT", <<-CODE
-  oauth_credentials:
+  auth_credentials:
     twitter: # Twitter api access: http://www.twitter.com/apps 
       key: ''
       secret: ''
