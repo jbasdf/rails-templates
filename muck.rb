@@ -33,7 +33,7 @@ git :init
 file 'Gemfile', <<-CODE
 source 'http://rubygems.org'
 
-gem 'rails', '3.0.5'
+gem 'rails', '3.0.7'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -47,7 +47,7 @@ CODE
 gem 'mysql'
 
 gem "authlogic"
-gem "will_paginate", "~> 3.0.beta"
+gem "will_paginate", "~> 3.0.pre2"
 gem "bcrypt-ruby", ">=2.1.1", :require => "bcrypt"
 gem "paperclip"
 gem "friendly_id"
@@ -56,9 +56,9 @@ gem "recaptcha", :require => "recaptcha/rails"
 gem 'jquery-rails', '>= 0.2.6'
 gem "jammit"
 
-gem "muck-engine", ">=3.3.1"
-gem "muck-users", ">=3.1.26"
-gem "muck-resources", ">=3.1.3"
+gem "muck-engine", ">=3.3.12"
+gem "muck-users", ">=3.2.10"
+gem "muck-resources", ">=3.1.5"
 
 #==================== 
 # Run bundler to install the required gems.
