@@ -92,10 +92,13 @@ MuckEngine.configure do |config|
   # Environment sensitive values
   if Rails.env.production?
     config.application_url = 'www.#{domain_name}'     # Url of the application in production
+    config.base_domain = '#{domain_name}'                # Basedomain
   elsif Rails.env.staging?
     config.application_url = 'www.#{domain_name}'     # Url of the application on staging
+    config.base_domain = '#{domain_name}'                # Basedomain
   else
     config.application_url = 'localhost:3000'         # Url of the application for test or development
+    config.base_domain = 'localhost:3000'                # Basedomain
   end
   
   # Global application values.  These are used to display the app name, send emails, and configure where system emails go.
@@ -117,8 +120,7 @@ MuckEngine.configure do |config|
   # Sendgrid is easy: https://sendgrid.com/user/signup
   config.email_server_address = "smtp.sendgrid.net"    # Email server address.  'smtp.sendgrid.net' works for sendgrid
   config.email_user_name = Secrets.email_user_name    # Email server username
-  config.email_password = Secrets.email_password      # Email server password
-  config.base_domain = '#{domain_name}'                # Basedomain that emails will come from
+  config.email_password = Secrets.email_password      # Email server password  
 
   # ssl
   config.enable_ssl = false # Enable ssl if you have an ssl certificate installed.  This will provide security between the client and server.
