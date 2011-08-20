@@ -175,8 +175,6 @@ if install_muck_services || install_everything
     # These settings apply to the toolbar which can be seen here: http://www.folksemantic.com/visits/53879
     config.enable_services_comments = true      # Enables or disables comments in the frame that wraps content as a user browses recommendation results
     config.enable_services_shares = true        # Enables or disables sharing in the frame that wraps content as a user browses recommendation results
-
-    config.google_ajax_referer = 'www.#{domain_name}'  # The website making requests to google.
     config.show_google_search = true                # Determines whether or not a google search is displayed on the topic page
     config.load_feeds_on_server = false             # Determines whether feeds on a topic page are loaded on the server or the client.  Loading on the server can take a while
     config.combine_feeds_on_server = false          # Combines feeds loaded on the server
