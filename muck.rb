@@ -47,13 +47,12 @@ CODE
 gem 'mysql'
 
 gem "authlogic"
-gem "will_paginate", "~> 3.0.pre2"
+gem "will_paginate", "~> 3.0.0"
 gem "bcrypt-ruby", ">=2.1.1", :require => "bcrypt"
 gem "paperclip"
 gem "friendly_id"
 gem "hoptoad_notifier"
 gem "recaptcha", :require => "recaptcha/rails"
-gem 'jquery-rails', '>= 0.2.6'
 gem "jammit"
 
 gem "muck-engine", ">=3.3.12"
